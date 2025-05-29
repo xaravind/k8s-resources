@@ -1,0 +1,19 @@
+apiVersion: v1
+Kind: pod 
+metadata:
+  name: pod-config
+spec:
+  containers:
+  - name: app
+    image: nginx
+  envFrom: # to refer all values at once in configmaps
+  - configMapKeyRef:
+    name: project
+  # env:
+  # # to refer single values
+  # - name: db
+  #   valueFrom:
+  #     configMapKeyRef:
+  #       name: project # The ConfigMap name this value comes from.
+  #       key: db #  The key to fetch.
+   

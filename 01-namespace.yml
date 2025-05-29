@@ -4,4 +4,4 @@ metadata:
   name: project
   labels:
     name: project
-    environment: PROD
+    env: PROD

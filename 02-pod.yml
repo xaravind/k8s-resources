@@ -4,7 +4,7 @@ metadata:
   name: project
   labels:
     name: project
-    environment: dev
+    env: dev
 spec:
   containers:
   - name: frontend
