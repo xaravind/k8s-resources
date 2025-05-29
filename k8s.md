@@ -1,30 +1,76 @@
-Docker Architecture consists of docker client which is command line tool, docker engine that is nothing but docker host, and the local registry and central registry. when ever you run a command in docker client , it will connect to the  daemon, it will check the image in local, if it is not available it will pull from cental registry and keep it in local and run a container from it and a send a request to the client.
 
+---
 
-Docker Problems
-----
-If container crashes, docker is not able to replace automatically --> Not Reliable, No self-healing
-No proper volume management
-no strong network connectivity
-no auto scaling
-no secrets and config management
+## Docker Limitations
 
+* **No self-healing:** If a container crashes, Docker does not automatically restart or replace it, making it less reliable.
+* **Volume management:** Docker lacks advanced or proper volume management features.
+* **Network connectivity:** Networking capabilities are limited and not robust for complex scenarios.
+* **No auto-scaling:** Docker alone cannot scale containers based on demand.
+* **Secrets and configuration management:** Docker does not provide built-in strong secrets or config management.
 
-Now are Building the image with docker but running images with docker
-we are using k8s to run the container, it only responsible the to run the image build network, build volume 
+Currently, we build container images with Docker but run them using Kubernetes (K8s). Kubernetes is responsible for running containers, managing network connectivity, handling volume mounts, and ensuring better orchestration and scalability.
 
+---
 
-Workstation
--------
-ekctl --> to create and manage cluster
-installation https://eksctl.io/installation/
+## Kubernetes Architecture Overview
 
-kubectl --> to manage containers in k8s.
-installation:- https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
+Kubernetes consists of:
 
-eks.yml
+* **Workstation:** Where you interact with the cluster (e.g., using `kubectl`).
+* **Control Plane / Master Node:** Manages the cluster state.
+* **Worker Nodes:** Where containers (pods) run.
 
-```bash
+---
+
+### Control Plane Components
+
+1. **kube-apiserver**
+   The API server is the frontend of Kubernetes’ control plane. It handles all RESTful API requests from users and components, validates and authenticates them, and updates the cluster state stored in etcd.
+
+2. **etcd**
+   A distributed key-value store that holds all cluster data — the “source of truth” for Kubernetes. It stores configuration, state data like nodes, pods, and ConfigMaps.
+
+3. **kube-scheduler**
+   Watches for pods that don’t have an assigned node yet. It assigns pods to nodes based on resource availability, affinity rules, taints, and tolerations.
+
+4. **kube-controller-manager**
+   Runs controllers that maintain the cluster’s desired state by monitoring and reconciling it. Examples:
+
+   * **Node Controller:** Checks node health
+   * **Replication Controller:** Ensures the desired number of pod replicas
+   * **Job Controller:** Manages batch jobs
+   * **Endpoints Controller:** Manages network endpoints
+
+5. **cloud-controller-manager**
+   Integrates Kubernetes with the cloud provider (AWS, GCP, Azure). It manages cloud-specific tasks such as load balancers, storage volumes, and node lifecycle.
+
+---
+
+### Node-Level Components
+
+1. **kubelet**
+   An agent running on each worker node. It receives pod specs from the API server and ensures the containers are running and healthy on its node.
+
+2. **kube-proxy**
+   Manages network routing on each node. It configures network rules to route traffic to the correct pods, enabling communication between services.
+
+3. **Container Runtime**
+   The software responsible for running containers on nodes, e.g., Docker, containerd, or CRI-O. The kubelet uses the runtime to start, stop, and manage containers.
+
+---
+
+## Workstation: Tools for Managing Kubernetes on AWS EKS
+
+### 1. **eksctl**
+
+`eksctl` is a simple CLI tool used to create and manage Kubernetes clusters on Amazon EKS. It automates many cluster setup tasks and simplifies cluster management.
+
+* **Installation:** Follow the instructions at [eksctl installation](https://eksctl.io/installation/).
+
+* **Sample cluster config (eks.yml):**
+
+```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
@@ -39,33 +85,61 @@ managedNodeGroups:
   spot: true
 ```
 
-to create eks-cluster
+* **Commands:**
 
 ```bash
-eksctl create cluster --config-file=<path> #to create cluster
-eksctl delete cluster --config-file=<path> #to delete cluster
+eksctl create cluster --config-file=<path-to-eks.yml>   # Create an EKS cluster
+eksctl delete cluster --config-file=<path-to-eks.yml>   # Delete the EKS cluster
 ```
 
-kubectl api-resources                  # Lists all available Kubernetes resources (currently around 63 by default)
+---
 
-kubectl get nodes                     # Displays the nodes in the Kubernetes cluster
+### 2. **kubectl**
 
-kubectl create namespace <name>      # Creates a new namespace
+`kubectl` is the Kubernetes CLI tool used to interact with and manage Kubernetes clusters, pods, services, and other resources.
 
-kubectl delete namespace <name>      # Deletes an existing namespace
+* **Installation:** Follow instructions at [AWS EKS kubectl guide](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html).
 
-kubectl describe <resource> <name>   # Describes the specified Kubernetes resource
+* **Common commands:**
 
-kubectl get ns                       # Lists all namespaces (shortcut for 'kubectl get namespaces')
+```bash
+kubectl api-resources                  # List all available Kubernetes resource types
 
+kubectl get nodes                      # Display all nodes in the cluster
 
-k8 resources
-------------
-01.namespace ---> isolated project space where you can create resources related to your project
+kubectl create namespace <name>       # Create a new namespace
 
-manifest file
------
+kubectl delete namespace <name>       # Delete an existing namespace
 
+kubectl describe <resource> <name>    # Show detailed info about a specific resource
+
+kubectl get ns                        # Shortcut to list all namespaces
+```
+
+---
+
+## k8s-resources ##
+---
+
+### 1. **Namespace**
+
+A **Namespace** is a way to **divide a Kubernetes cluster into isolated environments**. Think of it as a separate workspace where you can group related resources like pods, services, and deployments.
+
+---
+
+✅ **Why we use Namespaces**:
+
+* To **separate teams or projects** within the same cluster
+* To apply **different access controls, quotas, or policies**
+* To avoid **name conflicts** across environments (e.g., `dev`, `test`, `prod`)
+
+---
+
+📌 **Best Practices**:
+
+* Use namespaces for logical separation of concerns
+* Apply **resource limits and RBAC rules** per namespace
+* Avoid using the default namespace for production workloads
 
 example manifest file to create namespace
 ```bash
@@ -82,13 +156,27 @@ kubectl apply -f <file.yml> # to create k8s resources
 
 kubectl delete -f <file.yml> # to delete k8s resources
 
-----
+---
 
-02.pod --> smallest deployable unit kubernetes
------
-pod vs containers
--------
-a pod contains multiple containers. containers inside pod share same n/w and storage
+### 2. **Pod**
+
+A **Pod** is the **smallest deployable unit** in Kubernetes. It represents a single instance of a running process in a cluster.
+
+---
+
+✅ **Key Features**:
+
+* A pod typically runs **one container**, but it can run multiple if needed
+* All containers in a pod share the **same network IP and storage**
+* Pods are **short-lived** and usually managed by controllers like Deployments
+
+---
+
+📌 **Why we use Pods**:
+
+* To host application containers
+* To group containers that must share context (e.g., logging agents with main app)
+* To serve as the building block for Kubernetes workloads
 
 example manifest file to create pod
 ```bash
@@ -105,6 +193,42 @@ spec:
 kubectl apply -f <pod.yml>
 
 kubectl describe pod <pod-name> # to see pod info
+
+---
+
+### 3. **Multi-Container Pod**
+
+A **multi-container pod** runs two or more containers in the same pod.These containers work together and can communicate over `localhost`.
+
+---
+
+✅ **Why we use Multi-Container Pods**:
+
+* To create **sidecar containers** for logging, monitoring, or proxying
+* To run **helper processes** alongside the main application
+* To **share files and memory** via shared volumes
+
+---
+Here’s a **shorter version** of the same explanation, still tailored for an **interview setting** with a bit more emphasis on **AWS and Kubernetes**:
+
+---
+
+### Sidecar Container
+
+In Kubernetes, a **sidecar container** runs alongside the main application container in the same pod to handle supporting tasks. For example, instead of having the backend container push logs—which adds extra load—we use a sidecar like **Fluentd** to collect and forward logs.
+
+Fluentd sends logs to **Elasticsearch**, which we use as a centralized logging solution. In our setup, Elasticsearch is managed via **AWS**, enabling scalable and reliable log storage without burdening the application containers.
+
+This approach improves performance, observability, and separation of concerns in our microservices architecture.
+
+---
+
+
+📌 **Best Practices**:
+
+* Use multi-container pods **only when containers must work together**
+* Use **init containers** for setup tasks before main containers start
+* Design containers to be loosely coupled and independently replaceable when possible
 
 03.multi-containers.yml
 ```bash
@@ -125,85 +249,77 @@ kubectl apply -f multi-containers.yml
 
 kubectl exec -it <pod-name> -c <container-name> -- bash
 
-Got it! Here's a simplified and consistent explanation of each Kubernetes concept without including YAML examples:
+---
+
+### 4. **Labels**
+
+**Labels** are **key-value pairs** used to **organize and identify** Kubernetes resources.
 
 ---
 
-### 01. **Namespace**
+✅ **Why we use Labels**:
 
-A **namespace** is a virtual cluster within a Kubernetes cluster. It allows you to isolate and organize resources for different teams, environments, or projects.
-
-✅ **Why we use it**:
-
-* To separate environments like dev, test, and prod
-* To apply different resource quotas or access permissions
-* To avoid name collisions between resources in large clusters
+* To group resources logically (e.g., `app=frontend`, `env=prod`)
+* To **select resources** for services, deployments, and policies
+* To filter and manage resources using `kubectl` or tools like Helm
 
 ---
 
-### 02. **Pod**
+📌 **Best Practices**:
 
-A **pod** is the smallest deployable unit in Kubernetes. It can contain one or more containers that are tightly coupled and must run together.
-
-✅ **Key Points**:
-
-* All containers in a pod share the same **network** and **storage**
-* Used to host a single application process or tightly related processes
-* Managed by higher-level controllers like Deployments
+* Define consistent label naming conventions (e.g., `app`, `tier`, `version`)
+* Use labels to enable **rolling updates**, monitoring, and scaling
+* Avoid putting sensitive or unique data in labels
 
 ---
 
-### 03. **Multi-Container Pod**
+### 5. **Annotations**
 
-A **multi-container pod** runs two or more containers in the same pod. These containers work together and can communicate over `localhost`.
-
-✅ **Use Cases**:
-
-* Sidecar containers (e.g., logging agent, proxy, cache)
-* Adapter or helper processes that support the main container
-* Containers that need to share volumes or communicate frequently
+**Annotations** are also **key-value metadata**, but they store **non-identifying information** about Kubernetes objects.
 
 ---
 
-### 04. **Labels**
+✅ **Why we use Annotations**:
 
-**Labels** are key-value metadata attached to Kubernetes objects. They are used to organize, group, and select resources.
+* To attach **descriptive or operational data** (e.g., build info, monitoring configs)
+* To support **external tools and integrations** (e.g., Ingress controllers, CI/CD)
+* To provide context or configuration **without affecting selection or grouping**
 
-✅ **Why we use them**:
-
-* To filter and select resources using label selectors (e.g., in Services, Deployments)
-* To group resources by app, environment, or role
-* To manage resources dynamically (e.g., rolling updates)
 
 ---
 
-### 05. **Annotations**
+📌 **Best Practices**:
 
-**Annotations** are also key-value metadata, but they store **non-identifying** information. Unlike labels, annotations are not used for selecting or filtering.
+* Use annotations for **metadata that shouldn’t affect behavior**
+* Avoid storing sensitive data (use Secrets instead)
+* Use standardized annotation keys where possible (e.g., `kubectl.kubernetes.io/last-applied-configuration`)
 
-✅ **Why we use them**:
+**sample manifest files check from below github repo**
+https://github.com/xaravind/k8s-resources.git
 
-* To add documentation, tool-specific data, or config metadata
-* To store monitoring or audit information
-* To support integrations (e.g., with service meshes, CI/CD tools)
-
-
-📌 **Key Difference from Labels**:
-
-* Labels: Used by Kubernetes itself (selectors, groupings)
-
-* Annotations: Used for tooling, documentation, and external systems
 ---
 
-### 06. **Environment Variables**
+### 6. **Environment Variables**
 
-Environment variables are used to pass dynamic values into containers from the pod specification.
+**Environment variables** are used to **inject configuration values** into containers at runtime.
 
-✅ **Why we use them**:
+---
 
-* To configure applications at runtime (e.g., DB host, API keys)
-* To keep container images reusable by externalizing configuration
-* To inject values from ConfigMaps, Secrets, or inline definitions
+✅ **Why we use Environment Variables**:
+
+* To configure applications **without modifying code or images**
+* To provide settings like **database URLs, feature flags, or API keys**
+* To make containers **portable across environments**
+
+---
+
+📌 **Best Practices**:
+
+* Use them for simple values (e.g., strings, paths, ports)
+* Store values in **ConfigMaps or Secrets** and reference them in pods
+* Avoid hardcoding credentials—use Secrets for sensitive info
+
+---
 
 once you create pod with env variables, log into pod check env
 
@@ -216,113 +332,429 @@ project=micro-services
 practice=k8s
 ```
 ---
-07-resources.yml
----
+### 07. **Resources**
 
-```bash
-spec:
-  containers:
-  - name: app
-    image: nginx
-    resources:
-      # soft limit
-      requests:
-        memory: "64Mi"
-        cpu: "250m" # 1 cpu = 1000m
-      # limits should be atleast same or more than requests i.e hard limit
-      limits:
-        memory: "128Mi"
-        cpu: "500m"
-```
-
-
-
-
-sidecar - container
------
-in general we use backend to push log to elasticsearch and handle the user request, it will additional workload to container 
-so we use additional helper container(sidecar) to do the sidejobs.
-
-log push contiainer is called fluentd ( it solo responsibilty to push logs)
-
-elascticsearch --> aws service to use to store logs storage of cluster
-
-Kubernetes Control Plane
-
-
-
-
-the main **control plane components** in Kubernetes.
+In Kubernetes, **resources** refer to the **compute limits and requests** (CPU and memory) assigned to containers within a pod.
 
 ---
 
-### 1. **kube-apiserver**
+✅ **Why we use them**:
 
-The kube-apiserver handles requests from kubectl or other tools. It validates and authenticates requests, communicates with other control plane components, and updates the desired state in etcd.
-It acts as the front-end of the control plane and all API calls go through it.
-
----
-
-### 2. **etcd**
-
-etcd is a key-value store used to store all cluster data.
-It stores the desired state of the Kubernetes cluster, such as node info, pod specs, and config maps.
-It is the **source of truth** for the cluster.
+* To **prevent a container from using too many resources** and affecting others on the same node
+* To **schedule containers efficiently** based on available node capacity
+* To **enforce stability and fairness** in multi-tenant environments
 
 ---
 
-### 3. **kube-scheduler**
+🔧 **Types of Resource Settings**:
 
-The kube-scheduler watches for newly created pods that don’t have a node assigned.
-It selects the best node for the pod to run based on factors like resource requirements, taints/tolerations, and affinity rules.
+1. **Requests**
 
----
+   * Minimum amount of CPU or memory **guaranteed** to the container
+   * Kubernetes uses this to decide **where to schedule** the pod
+   * If resources are tight, a pod may not be scheduled unless its request can be met
 
-### 4. **kube-controller-manager**
+2. **Limits**
 
-The kube-controller-manager runs different controllers to handle background tasks.
-Each controller watches the cluster state and tries to move it toward the desired state.
-
-Some common controllers include:
-
-* **Node Controller** – checks if nodes are healthy.
-* **Replication Controller** – makes sure the right number of pod replicas are running.
-* **Job Controller** – handles batch jobs.
-* **Endpoints Controller** – manages endpoint objects.
+   * The **maximum amount** of CPU or memory a container is allowed to use
+   * If a container exceeds its memory limit, it will be **terminated (OOMKilled)**
+   * CPU overuse can be **throttled**, not killed
 
 ---
 
-### 5. **cloud-controller-manager**
+🧠 **How to determine appropriate values**:
 
-This component interacts with the cloud provider (like AWS, GCP, or Azure).
-It manages cloud-specific tasks, such as managing load balancers, storage volumes, and node information in the cloud.
+* **Start with baseline usage**: Monitor your app locally or in test environments
+* Use Kubernetes tools like:
+
+  * `kubectl top pod` (CPU/memory usage)
+  * Metrics server, Prometheus, or Datadog
+* Gradually tune **requests and limits** based on observed behavior
+* Set conservative defaults, then adjust as needed to avoid underutilization or crashes
+
+---
+### 08. **ConfigMaps**
+
+A **ConfigMap** is a Kubernetes object used to **store configuration data** (key-value pairs) separately from application code. This allows you to **inject dynamic configuration** into your containers **without rebuilding images**.
+
+---
+
+✅ **Why we use ConfigMaps**:
+
+* To **externalize app configuration** (e.g., URLs, feature flags, file paths)
+* To keep containers **environment-agnostic**
+* To **manage changes** to app settings without restarting or redeploying images
+* To **reuse configurations** across multiple pods or deployments
+
+---
+
+🧩 **Common ways to use ConfigMaps**:
+
+1. **As environment variables** in a container
+2. **Mounted as files** inside a container (useful for config files)
+3. Accessed programmatically via Kubernetes API (advanced use cases)
+
+---
+
+📌 **Best Practices**:
+
+* Use ConfigMaps for **non-sensitive data** only (use Secrets for sensitive info)
+* Combine with **Deployment strategies** to roll out config changes
+* Keep your ConfigMaps under version control (e.g., as YAML files in Git)
+---
+
+kubectl get configmap # to list configmaps
+kubectl describe configmap <configmap-name> # to show the details
+
+### 09. **Secrets**
+
+A **Secret** in Kubernetes is used to store **sensitive data** such as passwords, API keys, tokens, or certificates. Like ConfigMaps, Secrets decouple configuration from your application code — but with **added security**.
+
+---
+
+✅ **Why we use Secrets**:
+
+* To **securely store and manage sensitive information**
+* To avoid hardcoding secrets in container images or configuration files
+* To **inject secrets into pods** via environment variables or mounted volumes
+* To support **TLS, authentication, and encrypted credentials** management
+
+---
+
+🔒 **Key Features**:
+
+* Secrets are **base64-encoded** in etcd (not encrypted by default, but can be with encryption-at-rest)
+* They are only shared with pods that need them
+* Kubernetes RBAC controls who can access Secrets
+
+---
+
+🧩 **Common use cases**:
+
+* Database credentials
+* SSH keys or TLS certificates
+* Access tokens for external services (e.g., AWS, GitHub)
+
+---
+
+📌 **Best Practices**:
+
+* Use Secrets **only for confidential data**
+* Enable **encryption at rest** for etcd on your cluster
+* Limit access with **RBAC policies**
+* Avoid printing or logging secrets accidentally
+* Use tools like **Sealed Secrets, HashiCorp Vault**, or **external secret stores** for advanced secret management
+
+---
+
+### 10. **Services**
+
+A **Service** is a stable way to expose a set of pods to other services or external users.
+
+---
+
+✅ **Why we use Services**:
+
+* To give pods a **stable DNS name and IP** despite changing pod IPs
+* To enable **load balancing** across multiple pods
+* To control **how traffic reaches the application**
+
+---
+
+### 10.1 **NodePort**
+
+* Exposes the service on a **static port** on each node's IP
+* Accessible from **outside the cluster** via `NodeIP:NodePort`
+* ⚠️ Less flexible and secure for production
+
+---
+
+### 10.2 **ClusterIP**
+
+* Default service type
+* Exposes the service **internally** within the cluster
+* Ideal for **service-to-service** communication
+
+---
+
+### 10.3 **LoadBalancer**
+
+* Provisions an **external load balancer** (cloud-dependent)
+* Exposes service to **external traffic** using a **public IP**
+* Ideal for **internet-facing applications**
+
+---
+
+### 11. **ReplicaSet**
+
+A **ReplicaSet** ensures that a specified number of **pod replicas** are always running.
+
+---
+
+✅ **Why we use ReplicaSets**:
+
+* To maintain **high availability** and **scalability**
+* To **automatically replace failed or terminated pods**
+* Forms the foundation for **Deployments**
+
+---
+
+📌 **Best Practices**:
+
+* Don’t use ReplicaSet directly—use **Deployments** which manage ReplicaSets
+* Scale up/down using the Deployment for better control
+* Monitor pod health and replica status regularly
+
+---
+Here's a continuation in the same consistent style for:
+
+---
+
+### 12. **Deployment**
+
+A **Deployment** is a higher-level Kubernetes object that manages ReplicaSets and provides **declarative updates** to applications.
+
+---
+
+✅ **Why we use Deployments**:
+
+* To **automate rollout and rollback** of application versions
+* To **scale applications up or down** easily
+* To ensure **desired state** by managing ReplicaSets under the hood
+
+---
+
+📌 **Key Features**:
+
+* Supports **rolling updates** to avoid downtime
+* Automatically **replaces unhealthy pods**
+* Enables **version history tracking and rollback**
+
+---
+
+📌 **Best Practices**:
+
+* Define `strategy` (e.g., `RollingUpdate`) for controlled updates
+* Always **version your container images** (avoid `latest`)
+* Use probes (`readinessProbe`, `livenessProbe`) for better control over rollout behavior
+
+---
+
+### 13. **StatefulSet**
+
+A **StatefulSet** manages the deployment of **stateful applications**, ensuring each pod has a **stable identity**, **persistent storage**, and **ordered deployment**.
+
+---
+
+✅ **Why we use StatefulSets**:
+
+* For apps that need **stable hostnames** (e.g., databases like MySQL, Cassandra)
+* To ensure **ordered startup/shutdown** and consistent storage
+* To maintain **sticky identity** across pod restarts
+
+---
+
+📌 **Key Features**:
+
+* Pods get **unique, persistent identities** (`pod-0`, `pod-1`, etc.)
+* Supports **volume claim templates** for persistent storage
+* Ordered pod deployment and scaling
+
+---
+
+📌 **Best Practices**:
+
+* Use **Headless Services** for network identity
+* Combine with **PersistentVolumeClaims** for durable storage
+* Avoid using StatefulSets unless app truly requires state
+
+---
+
+### 14. **DaemonSet**
+
+A **DaemonSet** ensures that a **copy of a pod runs on every node** (or a specific group of nodes) in the cluster.
+
+---
+
+✅ **Why we use DaemonSets**:
+
+* For **node-level tasks** like logging, monitoring, or networking agents
+* To ensure **system-critical services** run on all nodes
+* To deploy pods on **new nodes automatically**
+
+---
+
+📌 **Key Features**:
+
+* Pods are created on **every node** in the cluster
+* Automatically schedules pods on **newly added nodes**
+* Can target **specific node groups** using selectors
+
+---
+
+📌 **Best Practices**:
+
+* Use for **infrastructure-level workloads**
+* Combine with **tolerations** and **nodeSelectors** for targeting
+* Avoid scheduling too many resource-heavy pods
+
+---
+Here's the continuation in the same format for **Jobs**, **CronJobs**, and **Ingress**:
+
+---
+
+### 15. **Job**
+
+A **Job** creates one or more pods to **run a task to completion**. Once the task finishes successfully, the job is marked as complete.
+
+---
+
+✅ **Why we use Jobs**:
+
+* To run **one-time tasks** like database migrations or batch processing
+* To **ensure completion** of critical background operations
+* To retry failed tasks a **specified number of times**
+
+---
+
+📌 **Key Features**:
+
+* Automatically **retries failed pods** based on the policy
+* Runs until the **success criteria** is met
+* Can run **parallel** or **sequential** pods
+
+---
+
+📌 **Best Practices**:
+
+* Set `backoffLimit` to control retries
+* Use `ttlSecondsAfterFinished` to clean up old jobs
+* Monitor job completion with `kubectl get jobs`
+
+---
+
+### 16. **CronJob**
+
+A **CronJob** runs Jobs **on a time-based schedule**, like Linux cron jobs.
+
+---
+
+✅ **Why we use CronJobs**:
+
+* To run **recurring tasks** (e.g., backups, reports, cleanups)
+* For **time-driven automation** in Kubernetes
+* To replace external cron-based systems
+
+---
+
+📌 **Key Features**:
+
+* Uses standard cron syntax (`* * * * *`)
+* Automatically creates Jobs on schedule
+* Supports `startingDeadlineSeconds`, `concurrencyPolicy`, etc.
+
+---
+
+📌 **Best Practices**:
+
+* Set a `successfulJobsHistoryLimit` to avoid clutter
+* Use `concurrencyPolicy: Forbid` or `Replace` for overlapping runs
+* Avoid over-scheduling — ensure the job completes before the next run
+
+---
+
+### 17. **Ingress**
+
+An **Ingress** is a Kubernetes object that manages **external access to services**, typically HTTP/HTTPS, using **rules**.
+
+---
+
+✅ **Why we use Ingress**:
+
+* To expose multiple services under a **single IP or domain**
+* To provide **path-based** or **host-based** routing
+* To apply **SSL/TLS termination** and **authentication**
+
+---
+
+📌 **Key Features**:
+
+* Uses an **Ingress Controller** (e.g., NGINX, Traefik)
+* Supports advanced **routing, redirects, and rewrites**
+* Integrates with **TLS certificates** for HTTPS
+
+---
+
+📌 **Best Practices**:
+
+* Always install a reliable Ingress Controller
+* Secure routes with TLS and authentication
+* Use annotations for custom behavior (timeouts, rewrites, etc.)
+
+---
+### 18. **NetworkPolicy**
+
+A **NetworkPolicy** defines how **pods communicate** with each other and with external endpoints at the **network level**.
+
+---
+
+✅ **Why we use NetworkPolicies**:
+
+* To **secure pod-to-pod traffic**
+* To restrict access to/from **namespaces, IPs, or ports**
+* To enforce **zero-trust networking** in Kubernetes
+
+---
+
+📌 **Key Features**:
+
+* Controls **inbound and outbound traffic**
+* Supports rules based on **pod labels, namespaces, IP blocks**
+* Works only if a **network plugin** (like Calico or Cilium) supports it
+
+---
+
+📌 **Best Practices**:
+
+* Start with **default deny all** policy
+* Apply **least privilege** communication rules
+* Document traffic flow to avoid accidental blocking
+
+---
+
+### 19. **Custom Resource (CR)**
+
+A **Custom Resource (CR)** is an extension of Kubernetes API that allows you to **define and manage your own object types**.
+
+---
+
+✅ **Why we use Custom Resources**:
+
+* To support **domain-specific workflows** (e.g., databases, ML pipelines)
+* To add **new behavior or automation** with Kubernetes-native integration
+* To build **custom controllers** for managing CRs
+
+---
+
+📌 **Key Features**:
+
+* Defined via **CustomResourceDefinition (CRD)**
+* Managed like native Kubernetes objects (`kubectl get <crd>`)
+* Can be paired with a **Controller** (operator pattern)
+
+---
+
+📌 **Best Practices**:
+
+* Follow Kubernetes object structure for compatibility
+* Use CRDs only when core resources aren't sufficient
+* Validate CRs with **OpenAPI schemas** in CRD definitions
 
 ---
 
 
-**Kubernetes Node-Level Components**
 
----
 
-### 1. **kubelet**
 
-kubelet is an agent that runs on each node.
-It ensures that containers are running as expected on that node.
-It gets pod instructions from the kube-apiserver and reports the status of the node and its pods back to the control plane.
 
----
 
-### 2. **kube-proxy**
-
-kube-proxy runs on each node and manages network rules.
-It helps route traffic to the correct pod across the cluster using IP tables or IPVS.
-It allows communication between services and pods inside the cluster.
-
----
-
-### 3. **Container Runtime**
-
-The container runtime is the software that runs containers (like Docker, containerd, or CRI-O).
-Kubelet uses the container runtime to start, stop, and manage containers on the node.
-
----
