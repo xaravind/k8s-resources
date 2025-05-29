@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
     name: project
     labels:
-      env: dev
+      environment: dev
 spec:
   containers:
     - name: nginx

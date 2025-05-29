@@ -1,0 +1,11 @@
+Kind: pod
+apiVersion: v1
+metadata: 
+    name: labels
+    labels:
+      author: aravind
+      project : k8s
+spec:
+    containers:
+    - name: nginx
+      image: nginx

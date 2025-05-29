@@ -61,7 +61,7 @@ kubectl get ns                       # Lists all namespaces (shortcut for 'kubec
 
 k8 resources
 ------------
-1.namespace ---> isolated project space where you can create resources related to your project
+01.namespace ---> isolated project space where you can create resources related to your project
 
 manifest file
 -----
@@ -84,13 +84,13 @@ kubectl delete -f <file.yml> # to delete k8s resources
 
 ----
 
-2.pod --> smallest deployable unit kubernetes
+02.pod --> smallest deployable unit kubernetes
 -----
 pod vs containers
 -------
 a pod contains multiple containers. containers inside pod share same n/w and storage
 
-example manifest file to create namespace
+example manifest file to create pod
 ```bash
 Kind: pod
 apiVersion: v1
@@ -106,7 +106,7 @@ kubectl apply -f <pod.yml>
 
 kubectl describe pod <pod-name> # to see pod info
 
-multi-containers.yml
+03.multi-containers.yml
 ```bash
 Kind: pod
 apiVersion: v1
@@ -125,17 +125,105 @@ kubectl apply -f multi-containers.yml
 
 kubectl exec -it <pod-name> -c <container-name> -- bash
 
+Got it! Here's a simplified and consistent explanation of each Kubernetes concept without including YAML examples:
+
+---
+
+### 01. **Namespace**
+
+A **namespace** is a virtual cluster within a Kubernetes cluster. It allows you to isolate and organize resources for different teams, environments, or projects.
+
+✅ **Why we use it**:
+
+* To separate environments like dev, test, and prod
+* To apply different resource quotas or access permissions
+* To avoid name collisions between resources in large clusters
+
+---
+
+### 02. **Pod**
+
+A **pod** is the smallest deployable unit in Kubernetes. It can contain one or more containers that are tightly coupled and must run together.
+
+✅ **Key Points**:
+
+* All containers in a pod share the same **network** and **storage**
+* Used to host a single application process or tightly related processes
+* Managed by higher-level controllers like Deployments
+
+---
+
+### 03. **Multi-Container Pod**
+
+A **multi-container pod** runs two or more containers in the same pod. These containers work together and can communicate over `localhost`.
+
+✅ **Use Cases**:
+
+* Sidecar containers (e.g., logging agent, proxy, cache)
+* Adapter or helper processes that support the main container
+* Containers that need to share volumes or communicate frequently
+
+---
+
+### 04. **Labels**
+
+**Labels** are key-value metadata attached to Kubernetes objects. They are used to organize, group, and select resources.
+
+✅ **Why we use them**:
+
+* To filter and select resources using label selectors (e.g., in Services, Deployments)
+* To group resources by app, environment, or role
+* To manage resources dynamically (e.g., rolling updates)
+
+---
+
+### 05. **Annotations**
+
+**Annotations** are also key-value metadata, but they store **non-identifying** information. Unlike labels, annotations are not used for selecting or filtering.
+
+✅ **Why we use them**:
+
+* To add documentation, tool-specific data, or config metadata
+* To store monitoring or audit information
+* To support integrations (e.g., with service meshes, CI/CD tools)
+
+
+📌 **Key Difference from Labels**:
+
+* Labels: Used by Kubernetes itself (selectors, groupings)
+
+* Annotations: Used for tooling, documentation, and external systems
+---
+
+### 06. **Environment Variables**
+
+Environment variables are used to pass dynamic values into containers from the pod specification.
+
+✅ **Why we use them**:
+
+* To configure applications at runtime (e.g., DB host, API keys)
+* To keep container images reusable by externalizing configuration
+* To inject values from ConfigMaps, Secrets, or inline definitions
+
+---
+
+
+
+
 
 sidecar - container
 -----
-in general we use backend to push log to elasticsearch and handke the user request, it will additional workload to container 
+in general we use backend to push log to elasticsearch and handle the user request, it will additional workload to container 
 so we use additional helper container(sidecar) to do the sidejobs.
 
-log push conti=ainer is called fluentd ( it solo responsibilty to push logs)
+log push contiainer is called fluentd ( it solo responsibilty to push logs)
 
 elascticsearch --> aws service to use to store logs storage of cluster
 
 Kubernetes Control Plane
+
+
+
 
 the main **control plane components** in Kubernetes.
 
