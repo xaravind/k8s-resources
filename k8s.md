@@ -205,8 +205,35 @@ Environment variables are used to pass dynamic values into containers from the p
 * To keep container images reusable by externalizing configuration
 * To inject values from ConfigMaps, Secrets, or inline definitions
 
+once you create pod with env variables, log into pod check env
+
+```bash
+kubectl exec -it <pod-name> -- bash
+
+root@env-test:/# env
+practice=k8s
+project=micro-services
+practice=k8s
+```
+---
+07-resources.yml
 ---
 
+```bash
+spec:
+  containers:
+  - name: app
+    image: nginx
+    resources:
+      # soft limit
+      requests:
+        memory: "64Mi"
+        cpu: "250m" # 1 cpu = 1000m
+      # limits should be atleast same or more than requests i.e hard limit
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+```
 
 
 

@@ -1,0 +1,8 @@
+Kind: pod
+apiVersion: v1
+metadata:
+  name: env
+  labels: 
+    environment: PROD
+
+    
