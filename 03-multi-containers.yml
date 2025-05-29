@@ -1,0 +1,13 @@
+Kind: pod
+apiVersion: v1
+metadata:
+    name: project
+    labels:
+      env: dev
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+    - name: alum
+      image: "almalinux:9"
+      command: ["sleep","80"]
