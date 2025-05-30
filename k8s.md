@@ -12,6 +12,11 @@
 Currently, we build container images with Docker but run them using Kubernetes (K8s). Kubernetes is responsible for running containers, managing network connectivity, handling volume mounts, and ensuring better orchestration and scalability.
 
 ---
+## Kubernetes
+
+Kubernetes is an open-source container orachestration platform for automating the deployment, scaling and management of containers or pods.
+
+The advantage of k8s over docker is the ability to run **container apps** distributed across multiple VMs.
 
 ## Kubernetes Architecture Overview
 
@@ -26,26 +31,88 @@ Kubernetes consists of:
 ### Control Plane Components
 
 1. **kube-apiserver**
-   The API server is the frontend of Kubernetes’ control plane. It handles all RESTful API requests from users and components, validates and authenticates them, and updates the cluster state stored in etcd.
 
-2. **etcd**
-   A distributed key-value store that holds all cluster data — the “source of truth” for Kubernetes. It stores configuration, state data like nodes, pods, and ConfigMaps.
+The `kube-apiserver` is the **front-end** of the Kubernetes control plane. It acts as the **main entry point** for all cluster operations.
 
-3. **kube-scheduler**
-   Watches for pods that don’t have an assigned node yet. It assigns pods to nodes based on resource availability, affinity rules, taints, and tolerations.
+* It **handles REST API requests** from `kubectl`, internal components (like the scheduler, controllers), and external tools.
+* It **validates**, **authenticates**, and **authorizes** each request before processing it.
+* After validation, it updates or retrieves data from **etcd** (the cluster’s source of truth).
+* All communication between the user and the Kubernetes cluster **must go through the API server**.
 
-4. **kube-controller-manager**
-   Runs controllers that maintain the cluster’s desired state by monitoring and reconciling it. Examples:
-
-   * **Node Controller:** Checks node health
-   * **Replication Controller:** Ensures the desired number of pod replicas
-   * **Job Controller:** Manages batch jobs
-   * **Endpoints Controller:** Manages network endpoints
-
-5. **cloud-controller-manager**
-   Integrates Kubernetes with the cloud provider (AWS, GCP, Azure). It manages cloud-specific tasks such as load balancers, storage volumes, and node lifecycle.
+It is the **only component** that directly communicates with etcd, and all other control plane components interact with the cluster through the API server.
 
 ---
+
+
+
+2. **etcd**
+ `etcd` is a **distributed and consistent key-value store** that Kubernetes uses to store **all cluster data**. It holds the **entire state of the cluster**, including objects like **nodes**, **pods**, **ConfigMaps**, **Secrets**, and more.
+
+   If `etcd` goes down or gets corrupted, the **Kubernetes control plane can't function properly**, because it relies on `etcd` to understand the current and desired state of the cluster. That’s why it’s critical to **back it up regularly**. In production environments, we usually store these backups in **cloud-based storage like Amazon S3**, so we can recover quickly if anything goes wrong.
+
+
+3. **kube-scheduler**
+   scheduler is responsible for deploying the new Pods across multiple nodes by considering VMs resources like CPU, RAM, Storage, and other constraints like taints, tolerations, and node selectors.
+
+
+4. **kube-controller-manager**
+
+The `kube-controller-manager` is a core component of the **Kubernetes control plane**. It continuously monitors the **desired state** (as defined in YAML manifests) and compares it to the **actual state** of the cluster (e.g., Pods running on worker nodes). It also detects changes such as  a **node failure**, **resource shortage**, and other events, and responds accordingly to maintain the desired state, including rescheduling or redistributing workloads.
+
+It runs multiple built-in controllers, each with a specific function:
+
+
+####  Components of `kube-controller-manager`:
+
+*  **Node Controller**:
+  Detects and responds to **node failures** (e.g., by marking nodes as `NotReady` and evicting Pods if necessary).
+
+*  **Replication Controller**:
+  Ensures the specified number of **Pod replicas** are always running for a given Deployment or ReplicaSet.
+
+*  **Job Controller**:
+  Manages the execution of **batch jobs**, ensuring Pods are created and run to completion.
+
+*  **Endpoints Controller**:
+  Maintains the list of **network endpoints** (IP and port pairs) associated with Services to ensure traffic is routed correctly.
+
+---
+
+5. **cloud-controller-manager**
+
+The `cloud-controller-manager` is a core component of Kubernetes that **integrates the cluster with cloud provider APIs** (e.g., **AWS**, **GCP**, **Azure**, etc.). It is responsible for managing **cloud-specific control logic** that is abstracted away from the rest of the Kubernetes control plane.
+
+---
+
+####  Responsibilities of `cloud-controller-manager`:
+
+*  **Load Balancer Controller**
+  Automatically creates and configures **cloud load balancers** for `Service` objects of type `LoadBalancer`.
+
+*  **Persistent Volume Controller**
+  Manages **provisioning and attachment of storage volumes** (e.g., EBS for AWS, Persistent Disks for GCP).
+
+*  **Node Lifecycle Controller**
+  Manages cloud-specific **node lifecycle events**, such as detecting and removing nodes that were deleted at the cloud provider level.
+
+*  **Route Controller** (optional)
+  Configures **network routes** in the cloud environment for Pod communication across nodes.
+
+---
+
+### 🔄 Comparison: `kube-controller-manager` vs `cloud-controller-manager`
+
+| Feature                   | kube-controller-manager                                       | cloud-controller-manager                                            |
+| ------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Purpose**               | Manages **cluster-level controllers** (generic to all setups) | Handles **cloud-provider-specific tasks**                           |
+| **Runs Controllers Like** | Node, Replication, Job, Endpoints Controllers                 | Load Balancer, Persistent Volume, Node Lifecycle, Route Controllers |
+| **Cloud Dependency**      | **Cloud-agnostic** (does not depend on cloud provider)        | **Cloud-dependent** (integrates with AWS, GCP, Azure, etc.)         |
+| **Failure Impact**        | Affects cluster-level object management and state maintenance | Affects cloud resource provisioning and integration                 |
+| **Extensibility**         | Limited to core Kubernetes objects                            | Pluggable per cloud provider, makes Kubernetes modular and portable |
+
+---
+
+
 
 ### Node-Level Components
 
