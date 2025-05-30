@@ -577,9 +577,6 @@ A **ReplicaSet** ensures that a specified number of **pod replicas** are always 
 * Monitor pod health and replica status regularly
 
 ---
-Here's a continuation in the same consistent style for:
-
----
 
 ### 12. **Deployment**
 
