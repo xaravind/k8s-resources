@@ -127,7 +127,7 @@ The `cloud-controller-manager` is a core component of Kubernetes that **integrat
 
 ---
 
-## Workstation: Tools for Managing Kubernetes on AWS EKS
+## Installation and configuration of Kubernetes in workstation
 
 ### 1. **eksctl**
 
