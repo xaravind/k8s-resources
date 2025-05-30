@@ -113,16 +113,29 @@ The `cloud-controller-manager` is a core component of Kubernetes that **integrat
 ---
 
 
-## Node-Level Components
-
 1. **kubelet**
-   This is the primary agent running on the node. It listens to the Kubernetes API server, receives Pod specs, and ensures the containers described in those Pods are running and healthy.
+
+
+Kubelet is an agent that runs on each node in the Kubernetes cluster. It ensures that the containers defined in PodSpecs are running and healthy. It communicates with the control plane to receive instructions and reports the status of pods and the node.
+
+---
 
 2. **kube-proxy**
-   It handles network routing and load balancing for Services. It maintains network rules on nodes, enabling communication between Pods and external clients.
 
-3. **Container Runtime**
-   This is the software that actually runs the containers (e.g., Docker, containerd, CRI-O). It pulls container images, starts and stops containers as instructed by the kubelet.
+**Answer:**
+Kube-proxy is responsible for maintaining network rules on nodes. It enables communication between services by forwarding traffic from a service IP to the appropriate backend pod. It supports TCP, UDP, and SCTP load balancing.
+
+---
+
+3. **container runtime**
+
+The container runtime is the component that actually runs the containers on each node. It pulls container images, starts, stops, and manages containers as instructed by the kubelet. Common examples include **containerd**, **CRI-O**, and (historically) **Docker**.
+
+---
+
+* **kubelet** – Ensures containers are running and healthy
+* **kube-proxy** – Manages network rules for service-to-pod traffic
+* **Container Runtime** – Runs the actual containers (e.g., containerd, CRI-O)
 
 ---
 
