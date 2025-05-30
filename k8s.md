@@ -462,6 +462,7 @@ A **ConfigMap** is a Kubernetes object used to **store configuration data** (key
 ---
 
 kubectl get configmap # to list configmaps
+
 kubectl describe configmap <configmap-name> # to show the details
 
 ### 09. **Secrets**
