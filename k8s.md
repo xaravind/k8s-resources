@@ -48,8 +48,6 @@ It is the **only component** that directly communicates with etcd, and all other
 2. **etcd**
  `etcd` is a **distributed and consistent key-value store** that Kubernetes uses to store **all cluster data**. It holds the **entire state of the cluster**, including objects like **nodes**, **pods**, **ConfigMaps**, **Secrets**, and more.
 
----
-
    If `etcd` goes down or gets corrupted, the **Kubernetes control plane can't function properly**, because it relies on `etcd` to understand the current and desired state of the cluster. That’s why it’s critical to **back it up regularly**. In production environments, we usually store these backups in **cloud-based storage like Amazon S3**, so we can recover quickly if anything goes wrong.
 
 ---
