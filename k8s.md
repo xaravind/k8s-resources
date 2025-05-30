@@ -28,7 +28,7 @@ Kubernetes consists of:
 
 ---
 
-### Control Plane Components
+## Control Plane Components
 
 1. **kube-apiserver**
 
@@ -114,7 +114,7 @@ The `cloud-controller-manager` is a core component of Kubernetes that **integrat
 ---
 
 
-### Node-Level Components
+## Node-Level Components
 
 1. **kubelet**
    This is the primary agent running on the node. It listens to the Kubernetes API server, receives Pod specs, and ensures the containers described in those Pods are running and healthy.
