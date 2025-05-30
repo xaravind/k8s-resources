@@ -52,12 +52,12 @@ It is the **only component** that directly communicates with etcd, and all other
 
 ---
 
-4. **kube-scheduler**
+3. **kube-scheduler**
    scheduler is responsible for deploying the new Pods across multiple nodes by considering VMs resources like CPU, RAM, Storage, and other constraints like taints, tolerations, and node selectors.
 
 ---
 
-5. **kube-controller-manager**
+4. **kube-controller-manager**
 
 The `kube-controller-manager` is a core component of the **Kubernetes control plane**. It continuously monitors the **desired state** (as defined in YAML manifests) and compares it to the **actual state** of the cluster (e.g., Pods running on worker nodes). It also detects changes such as  a **node failure**, **resource shortage**, and other events, and responds accordingly to maintain the desired state, including rescheduling or redistributing workloads.
 
