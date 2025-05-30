@@ -240,12 +240,6 @@ A **Pod** is the **smallest deployable unit** in Kubernetes. It represents a sin
 
 ---
 
-📌 **Why we use Pods**:
-
-* To host application containers
-* To group containers that must share context (e.g., logging agents with main app)
-* To serve as the building block for Kubernetes workloads
-
 example manifest file to create pod
 ```bash
 Kind: pod
@@ -275,9 +269,6 @@ A **multi-container pod** runs two or more containers in the same pod.These cont
 * To create **sidecar containers** for logging, monitoring, or proxying
 * To run **helper processes** alongside the main application
 * To **share files and memory** via shared volumes
-
----
-Here’s a **shorter version** of the same explanation, still tailored for an **interview setting** with a bit more emphasis on **AWS and Kubernetes**:
 
 ---
 
@@ -414,7 +405,7 @@ In Kubernetes, **resources** refer to the **compute limits and requests** (CPU a
 
 ---
 
-🔧 **Types of Resource Settings**:
+ **Types of Resource Settings**:
 
 1. **Requests**
 
@@ -430,7 +421,7 @@ In Kubernetes, **resources** refer to the **compute limits and requests** (CPU a
 
 ---
 
-🧠 **How to determine appropriate values**:
+ **How to determine appropriate values**:
 
 * **Start with baseline usage**: Monitor your app locally or in test environments
 * Use Kubernetes tools like:
@@ -456,7 +447,7 @@ A **ConfigMap** is a Kubernetes object used to **store configuration data** (key
 
 ---
 
-🧩 **Common ways to use ConfigMaps**:
+ **Common ways to use ConfigMaps**:
 
 1. **As environment variables** in a container
 2. **Mounted as files** inside a container (useful for config files)
@@ -489,7 +480,7 @@ A **Secret** in Kubernetes is used to store **sensitive data** such as passwords
 
 ---
 
-🔒 **Key Features**:
+ **Key Features**:
 
 * Secrets are **base64-encoded** in etcd (not encrypted by default, but can be with encryption-at-rest)
 * They are only shared with pods that need them
@@ -497,7 +488,7 @@ A **Secret** in Kubernetes is used to store **sensitive data** such as passwords
 
 ---
 
-🧩 **Common use cases**:
+ **Common use cases**:
 
 * Database credentials
 * SSH keys or TLS certificates
