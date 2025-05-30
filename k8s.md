@@ -84,7 +84,7 @@ It runs multiple built-in controllers, each with a specific function:
 
 The `cloud-controller-manager` is a core component of Kubernetes that **integrates the cluster with cloud provider APIs** (e.g., **AWS**, **GCP**, **Azure**, etc.). It is responsible for managing **cloud-specific control logic** that is abstracted away from the rest of the Kubernetes control plane.
 
----
+
 
 ####  Responsibilities of `cloud-controller-manager`:
 
@@ -100,7 +100,6 @@ The `cloud-controller-manager` is a core component of Kubernetes that **integrat
 *  **Route Controller** (optional)
   Configures **network routes** in the cloud environment for Pod communication across nodes.
 
----
 
 ### 🔄 Comparison: `kube-controller-manager` vs `cloud-controller-manager`
 
