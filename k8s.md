@@ -41,21 +41,17 @@ The `kube-apiserver` is the **front-end** of the Kubernetes control plane. It ac
 
 It is the **only component** that directly communicates with etcd, and all other control plane components interact with the cluster through the API server.
 
----
-
-
 
 2. **etcd**
  `etcd` is a **distributed and consistent key-value store** that Kubernetes uses to store **all cluster data**. It holds the **entire state of the cluster**, including objects like **nodes**, **pods**, **ConfigMaps**, **Secrets**, and more.
 
    If `etcd` goes down or gets corrupted, the **Kubernetes control plane can't function properly**, because it relies on `etcd` to understand the current and desired state of the cluster. That’s why it’s critical to **back it up regularly**. In production environments, we usually store these backups in **cloud-based storage like Amazon S3**, so we can recover quickly if anything goes wrong.
 
----
 
 3. **kube-scheduler**
    scheduler is responsible for deploying the new Pods across multiple nodes by considering VMs resources like CPU, RAM, Storage, and other constraints like taints, tolerations, and node selectors.
 
----
+
 
 4. **kube-controller-manager**
 
@@ -78,7 +74,6 @@ It runs multiple built-in controllers, each with a specific function:
 *  **Endpoints Controller**:
   Maintains the list of **network endpoints** (IP and port pairs) associated with Services to ensure traffic is routed correctly.
 
----
 
 5. **cloud-controller-manager**
 
