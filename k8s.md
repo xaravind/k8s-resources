@@ -48,14 +48,18 @@ It is the **only component** that directly communicates with etcd, and all other
 2. **etcd**
  `etcd` is a **distributed and consistent key-value store** that Kubernetes uses to store **all cluster data**. It holds the **entire state of the cluster**, including objects like **nodes**, **pods**, **ConfigMaps**, **Secrets**, and more.
 
+---
+
    If `etcd` goes down or gets corrupted, the **Kubernetes control plane can't function properly**, because it relies on `etcd` to understand the current and desired state of the cluster. That’s why it’s critical to **back it up regularly**. In production environments, we usually store these backups in **cloud-based storage like Amazon S3**, so we can recover quickly if anything goes wrong.
 
+---
 
-3. **kube-scheduler**
+4. **kube-scheduler**
    scheduler is responsible for deploying the new Pods across multiple nodes by considering VMs resources like CPU, RAM, Storage, and other constraints like taints, tolerations, and node selectors.
 
+---
 
-4. **kube-controller-manager**
+5. **kube-controller-manager**
 
 The `kube-controller-manager` is a core component of the **Kubernetes control plane**. It continuously monitors the **desired state** (as defined in YAML manifests) and compares it to the **actual state** of the cluster (e.g., Pods running on worker nodes). It also detects changes such as  a **node failure**, **resource shortage**, and other events, and responds accordingly to maintain the desired state, including rescheduling or redistributing workloads.
 
@@ -113,17 +117,16 @@ The `cloud-controller-manager` is a core component of Kubernetes that **integrat
 ---
 
 
-
 ### Node-Level Components
 
 1. **kubelet**
-   An agent running on each worker node. It receives pod specs from the API server and ensures the containers are running and healthy on its node.
+   This is the primary agent running on the node. It listens to the Kubernetes API server, receives Pod specs, and ensures the containers described in those Pods are running and healthy.
 
 2. **kube-proxy**
-   Manages network routing on each node. It configures network rules to route traffic to the correct pods, enabling communication between services.
+   It handles network routing and load balancing for Services. It maintains network rules on nodes, enabling communication between Pods and external clients.
 
 3. **Container Runtime**
-   The software responsible for running containers on nodes, e.g., Docker, containerd, or CRI-O. The kubelet uses the runtime to start, stop, and manage containers.
+   This is the software that actually runs the containers (e.g., Docker, containerd, CRI-O). It pulls container images, starts and stops containers as instructed by the kubelet.
 
 ---
 
@@ -185,7 +188,7 @@ kubectl get ns                        # Shortcut to list all namespaces
 
 ---
 
-## k8s-resources ##
+## k8s-resources
 ---
 
 ### 1. **Namespace**
