@@ -186,7 +186,7 @@ kubectl get ns                        # Shortcut to list all namespaces
 ---
 
 ## k8s-resources
----
+
 
 ### 1. **Namespace**
 
