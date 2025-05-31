@@ -1,5 +1,4 @@
 
----
 
 ## Docker Limitations
 
@@ -12,6 +11,11 @@
 Currently, we build container images with Docker but run them using Kubernetes (K8s). Kubernetes is responsible for running containers, managing network connectivity, handling volume mounts, and ensuring better orchestration and scalability.
 
 ---
+## Kubernetes
+
+Kubernetes is an open-source container orachestration platform for automating the deployment, scaling and management of containers or pods.
+
+The advantage of k8s over docker is the ability to run **container apps** distributed across multiple VMs.
 
 ## Kubernetes Architecture Overview
 
@@ -23,44 +27,118 @@ Kubernetes consists of:
 
 ---
 
-### Control Plane Components
+## Control Plane Components
 
 1. **kube-apiserver**
-   The API server is the frontend of Kubernetes’ control plane. It handles all RESTful API requests from users and components, validates and authenticates them, and updates the cluster state stored in etcd.
+
+The `kube-apiserver` is the **front-end** of the Kubernetes control plane. It acts as the **main entry point** for all cluster operations.
+
+* It **handles REST API requests** from `kubectl`, internal components (like the scheduler, controllers), and external tools.
+* It **validates**, **authenticates**, and **authorizes** each request before processing it.
+* After validation, it updates or retrieves data from **etcd** (the cluster’s source of truth).
+* All communication between the user and the Kubernetes cluster **must go through the API server**.
+
+It is the **only component** that directly communicates with etcd, and all other control plane components interact with the cluster through the API server.
+
+---
 
 2. **etcd**
-   A distributed key-value store that holds all cluster data — the “source of truth” for Kubernetes. It stores configuration, state data like nodes, pods, and ConfigMaps.
+ `etcd` is a **distributed and consistent key-value store** that Kubernetes uses to store **all cluster data**. It holds the **entire state of the cluster**, including objects like **nodes**, **pods**, **ConfigMaps**, **Secrets**, and more.
+
+   If `etcd` goes down or gets corrupted, the **Kubernetes control plane can't function properly**, because it relies on `etcd` to understand the current and desired state of the cluster. That’s why it’s critical to **back it up regularly**. In production environments, we usually store these backups in **cloud-based storage like Amazon S3**, so we can recover quickly if anything goes wrong.
+
+---
 
 3. **kube-scheduler**
-   Watches for pods that don’t have an assigned node yet. It assigns pods to nodes based on resource availability, affinity rules, taints, and tolerations.
+   scheduler is responsible for deploying the new Pods across multiple nodes by considering VMs resources like CPU, RAM, Storage, and other constraints like taints, tolerations, and node selectors.
+
+---
+
 
 4. **kube-controller-manager**
-   Runs controllers that maintain the cluster’s desired state by monitoring and reconciling it. Examples:
 
-   * **Node Controller:** Checks node health
-   * **Replication Controller:** Ensures the desired number of pod replicas
-   * **Job Controller:** Manages batch jobs
-   * **Endpoints Controller:** Manages network endpoints
+The `kube-controller-manager` is a core component of the **Kubernetes control plane**. It continuously monitors the **desired state** (as defined in YAML manifests) and compares it to the **actual state** of the cluster (e.g., Pods running on worker nodes). It also detects changes such as  a **node failure**, **resource shortage**, and other events, and responds accordingly to maintain the desired state, including rescheduling or redistributing workloads.
+
+It runs multiple built-in controllers, each with a specific function:
+
+
+####  Components of `kube-controller-manager`:
+
+*  **Node Controller**:
+  Detects and responds to **node failures** (e.g., by marking nodes as `NotReady` and evicting Pods if necessary).
+
+*  **Replication Controller**:
+  Ensures the specified number of **Pod replicas** are always running for a given Deployment or ReplicaSet.
+
+*  **Job Controller**:
+  Manages the execution of **batch jobs**, ensuring Pods are created and run to completion.
+
+*  **Endpoints Controller**:
+  Maintains the list of **network endpoints** (IP and port pairs) associated with Services to ensure traffic is routed correctly.
+
+---
 
 5. **cloud-controller-manager**
-   Integrates Kubernetes with the cloud provider (AWS, GCP, Azure). It manages cloud-specific tasks such as load balancers, storage volumes, and node lifecycle.
+
+The `cloud-controller-manager` is a core component of Kubernetes that **integrates the cluster with cloud provider APIs** (e.g., **AWS**, **GCP**, **Azure**, etc.). It is responsible for managing **cloud-specific control logic** that is abstracted away from the rest of the Kubernetes control plane.
+
+
+
+####  Responsibilities of `cloud-controller-manager`:
+
+*  **Load Balancer Controller**
+  Automatically creates and configures **cloud load balancers** for `Service` objects of type `LoadBalancer`.
+
+*  **Persistent Volume Controller**
+  Manages **provisioning and attachment of storage volumes** (e.g., EBS for AWS, Persistent Disks for GCP).
+
+*  **Node Lifecycle Controller**
+  Manages cloud-specific **node lifecycle events**, such as detecting and removing nodes that were deleted at the cloud provider level.
+
+*  **Route Controller** (optional)
+  Configures **network routes** in the cloud environment for Pod communication across nodes.
+
+
+### 🔄 Comparison: `kube-controller-manager` vs `cloud-controller-manager`
+
+| Feature                   | kube-controller-manager                                       | cloud-controller-manager                                            |
+| ------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Purpose**               | Manages **cluster-level controllers** (generic to all setups) | Handles **cloud-provider-specific tasks**                           |
+| **Runs Controllers Like** | Node, Replication, Job, Endpoints Controllers                 | Load Balancer, Persistent Volume, Node Lifecycle, Route Controllers |
+| **Cloud Dependency**      | **Cloud-agnostic** (does not depend on cloud provider)        | **Cloud-dependent** (integrates with AWS, GCP, Azure, etc.)         |
+| **Failure Impact**        | Affects cluster-level object management and state maintenance | Affects cloud resource provisioning and integration                 |
+| **Extensibility**         | Limited to core Kubernetes objects                            | Pluggable per cloud provider, makes Kubernetes modular and portable |
 
 ---
 
-### Node-Level Components
 
 1. **kubelet**
-   An agent running on each worker node. It receives pod specs from the API server and ensures the containers are running and healthy on its node.
 
-2. **kube-proxy**
-   Manages network routing on each node. It configures network rules to route traffic to the correct pods, enabling communication between services.
 
-3. **Container Runtime**
-   The software responsible for running containers on nodes, e.g., Docker, containerd, or CRI-O. The kubelet uses the runtime to start, stop, and manage containers.
+Kubelet is an agent that runs on each node in the Kubernetes cluster. It ensures that the containers defined in PodSpecs are running and healthy. It communicates with the control plane to receive instructions and reports the status of pods and the node.
 
 ---
 
-## Workstation: Tools for Managing Kubernetes on AWS EKS
+2. **kube-proxy**
+
+**Answer:**
+Kube-proxy is responsible for maintaining network rules on nodes. It enables communication between services by forwarding traffic from a service IP to the appropriate backend pod. It supports TCP, UDP, and SCTP load balancing.
+
+---
+
+3. **container runtime**
+
+The container runtime is the component that actually runs the containers on each node. It pulls container images, starts, stops, and manages containers as instructed by the kubelet. Common examples include **containerd**, **CRI-O**, and (historically) **Docker**.
+
+---
+
+* **kubelet** – Ensures containers are running and healthy
+* **kube-proxy** – Manages network rules for service-to-pod traffic
+* **Container Runtime** – Runs the actual containers (e.g., containerd, CRI-O)
+
+---
+
+## Installation and configuration of Kubernetes in workstation
 
 ### 1. **eksctl**
 
@@ -118,8 +196,8 @@ kubectl get ns                        # Shortcut to list all namespaces
 
 ---
 
-## k8s-resources ##
----
+## k8s-resources
+
 
 ### 1. **Namespace**
 
@@ -172,12 +250,6 @@ A **Pod** is the **smallest deployable unit** in Kubernetes. It represents a sin
 
 ---
 
-📌 **Why we use Pods**:
-
-* To host application containers
-* To group containers that must share context (e.g., logging agents with main app)
-* To serve as the building block for Kubernetes workloads
-
 example manifest file to create pod
 ```bash
 Kind: pod
@@ -207,9 +279,6 @@ A **multi-container pod** runs two or more containers in the same pod.These cont
 * To create **sidecar containers** for logging, monitoring, or proxying
 * To run **helper processes** alongside the main application
 * To **share files and memory** via shared volumes
-
----
-Here’s a **shorter version** of the same explanation, still tailored for an **interview setting** with a bit more emphasis on **AWS and Kubernetes**:
 
 ---
 
@@ -346,7 +415,7 @@ In Kubernetes, **resources** refer to the **compute limits and requests** (CPU a
 
 ---
 
-🔧 **Types of Resource Settings**:
+ **Types of Resource Settings**:
 
 1. **Requests**
 
@@ -362,7 +431,7 @@ In Kubernetes, **resources** refer to the **compute limits and requests** (CPU a
 
 ---
 
-🧠 **How to determine appropriate values**:
+ **How to determine appropriate values**:
 
 * **Start with baseline usage**: Monitor your app locally or in test environments
 * Use Kubernetes tools like:
@@ -388,7 +457,7 @@ A **ConfigMap** is a Kubernetes object used to **store configuration data** (key
 
 ---
 
-🧩 **Common ways to use ConfigMaps**:
+ **Common ways to use ConfigMaps**:
 
 1. **As environment variables** in a container
 2. **Mounted as files** inside a container (useful for config files)
@@ -404,6 +473,7 @@ A **ConfigMap** is a Kubernetes object used to **store configuration data** (key
 ---
 
 kubectl get configmap # to list configmaps
+
 kubectl describe configmap <configmap-name> # to show the details
 
 ### 09. **Secrets**
@@ -421,7 +491,7 @@ A **Secret** in Kubernetes is used to store **sensitive data** such as passwords
 
 ---
 
-🔒 **Key Features**:
+ **Key Features**:
 
 * Secrets are **base64-encoded** in etcd (not encrypted by default, but can be with encryption-at-rest)
 * They are only shared with pods that need them
@@ -429,7 +499,7 @@ A **Secret** in Kubernetes is used to store **sensitive data** such as passwords
 
 ---
 
-🧩 **Common use cases**:
+ **Common use cases**:
 
 * Database credentials
 * SSH keys or TLS certificates
@@ -504,9 +574,6 @@ A **ReplicaSet** ensures that a specified number of **pod replicas** are always 
 * Don’t use ReplicaSet directly—use **Deployments** which manage ReplicaSets
 * Scale up/down using the Deployment for better control
 * Monitor pod health and replica status regularly
-
----
-Here's a continuation in the same consistent style for:
 
 ---
 
