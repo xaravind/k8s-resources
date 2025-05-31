@@ -751,10 +751,3 @@ A **Custom Resource (CR)** is an extension of Kubernetes API that allows you to 
 * Validate CRs with **OpenAPI schemas** in CRD definitions
 
 ---
-
-
-
-
-
-
-
