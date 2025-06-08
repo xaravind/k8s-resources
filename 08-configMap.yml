@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: project
+data:
+  github: "https://github.com/xaravind/k8s-resources.git"
+  db: "jdbc:mysql://mysql:3306/sample"

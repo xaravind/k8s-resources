@@ -1,8 +1,16 @@
 Kind: pod
 apiVersion: v1
 metadata:
-  name: env
+  name: env-test
   labels: 
     environment: PROD
-
+spec:
+  containers: 
+  - name: nginx
+    image: nginx
+    env:
+    - name: practice
+      value: k8s
+    - name: project
+      value: micro-services
     
