@@ -211,12 +211,39 @@ kubectl get ns                        # Shortcut to list all namespaces
 
 ---
 
+
+Your notes on **Kubernetes Resources** are very well-structured, practical, and easy to follow — especially for beginners and intermediate users. You've explained key concepts using examples, best practices, and clear YAML snippets. Well done!
+
+---
+
+### ✅ Feedback Summary
+
+#### **Strengths:**
+
+* 🔹 **Clarity**: Definitions are clear and concise.
+* 🔹 **Real-world relevance**: Practical examples and command-line instructions are excellent.
+* 🔹 **Structure**: Organized with bullet points, headings, and markdown styling that makes it easy to read.
+* 🔹 **Best practices**: Great that you're including these for each resource — very helpful!
+
+---
+
+
+
+
 ## k8s-resources
 
+
+## What Are Kubernetes Resources?
+
+In Kubernetes, **resources** are the building blocks used to deploy, manage, and scale applications. These include objects like **pods, services, deployments, config maps, secrets**, and more.
+
+Each resource serves a specific role in defining the **desired state** of your application and the **infrastructure logic** needed to support it.
 
 ### 1. **Namespace**
 
 A **Namespace** is a way to **divide a Kubernetes cluster into isolated environments**. Think of it as a separate workspace where you can group related resources like pods, services, and deployments.
+
+- Isolated Project where you can create resources to related to your project.
 
 ---
 
@@ -289,30 +316,51 @@ A **multi-container pod** runs two or more containers in the same pod.These cont
 
 ---
 
-✅ **Why we use Multi-Container Pods**:
+✅ **Why We Use Multi-Container Pods**
 
 * To create **sidecar containers** for logging, monitoring, or proxying
 * To run **helper processes** alongside the main application
 * To **share files and memory** via shared volumes
+* To use **init containers** for startup tasks like waiting for dependencies, setting up config files, or initializing volumes before the main container starts
+* ⚙️ **Workload separation** allows auxiliary tasks—such as log forwarding, data synchronization, or certificate renewal—to run in separate containers, keeping the **main container focused on its core responsibilities** (e.g., handling API requests)
+
+🔹 *Example*: A sidecar like **Fluentd** can handle log shipping, offloading that task from the backend container, which improves performance and maintains separation of concerns.
 
 ---
 
-### Sidecar Container
+###  Sidecar Container
 
-In Kubernetes, a **sidecar container** runs alongside the main application container in the same pod to handle supporting tasks. For example, instead of having the backend container push logs—which adds extra load—we use a sidecar like **Fluentd** to collect and forward logs.
+In Kubernetes, a **sidecar container** runs alongside the main application container within the same pod to handle supporting tasks.
 
-Fluentd sends logs to **Elasticsearch**, which we use as a centralized logging solution. In our setup, Elasticsearch is managed via **AWS**, enabling scalable and reliable log storage without burdening the application containers.
+For example, rather than having the backend container push logs—which adds unnecessary load—we deploy a sidecar like **Fluentd** to collect and forward logs.
 
-This approach improves performance, observability, and separation of concerns in our microservices architecture.
+**Fluentd** then sends logs to **Elasticsearch**, our centralized logging solution. Since Elasticsearch is managed via **AWS**, we benefit from scalable and reliable log storage without burdening application containers.
+
+This approach enhances **performance**, improves **observability**, and supports **separation of concerns** within our microservices architecture.
 
 ---
 
+###  Init Container
+
+An **init container** in Kubernetes runs **before** the main application container starts. It performs **preparation tasks** that must succeed before the app begins execution.
+
+For instance, if the application depends on a service like a database, the init container can run a script to **wait for the database to become available** or to **initialize configuration files or shared volumes**.
+
+By handling such setup logic outside the main container, we:
+
+* Improve **startup reliability**
+* Keep application code simpler
+* Enforce a consistent **startup sequence**
+
+---
 
 📌 **Best Practices**:
 
 * Use multi-container pods **only when containers must work together**
 * Use **init containers** for setup tasks before main containers start
 * Design containers to be loosely coupled and independently replaceable when possible
+
+---
 
 03.multi-containers.yml
 ```bash
@@ -331,13 +379,15 @@ spec:
 
 kubectl apply -f multi-containers.yml
 
-kubectl exec -it <pod-name> -c <container-name> -- bash
+kubectl exec -it <pod-name> -c <container-name> -- bash   # Access a specific container in a pod
 
 ---
 
 ### 4. **Labels**
 
 **Labels** are **key-value pairs** used to **organize and identify** Kubernetes resources.
+
+> Labels are mandatory in Kubernetes as they help services identify which pods they belong to and which ones they should target.
 
 ---
 
@@ -354,6 +404,10 @@ kubectl exec -it <pod-name> -c <container-name> -- bash
 * Define consistent label naming conventions (e.g., `app`, `tier`, `version`)
 * Use labels to enable **rolling updates**, monitoring, and scaling
 * Avoid putting sensitive or unique data in labels
+
+
+**sample manifest files, uploaded in below github repo**
+https://github.com/xaravind/k8s-resources.git
 
 ---
 
@@ -378,7 +432,7 @@ kubectl exec -it <pod-name> -c <container-name> -- bash
 * Avoid storing sensitive data (use Secrets instead)
 * Use standardized annotation keys where possible (e.g., `kubectl.kubernetes.io/last-applied-configuration`)
 
-**sample manifest files check from below github repo**
+**sample manifest files, uploaded in below github repo**
 https://github.com/xaravind/k8s-resources.git
 
 ---
@@ -405,6 +459,21 @@ https://github.com/xaravind/k8s-resources.git
 
 ---
 
+**sample manifest file**
+```bash
+Kind: pod
+apiVersion: v1
+metadata: 
+    name: labels
+    labels:
+      author: aravind
+      project : k8s
+spec:
+    containers:
+    - name: nginx
+      image: nginx
+```
+
 once you create pod with env variables, log into pod check env
 
 ```bash
@@ -419,6 +488,8 @@ practice=k8s
 ### 07. **Resources**
 
 In Kubernetes, **resources** refer to the **compute limits and requests** (CPU and memory) assigned to containers within a pod.
+
+> In Kubernetes, resource requests specify the minimum CPU and memory required for a pod to be scheduled on a node, while resource limits define the maximum CPU and memory the pod can use on that node.
 
 ---
 
@@ -451,15 +522,85 @@ In Kubernetes, **resources** refer to the **compute limits and requests** (CPU a
 * **Start with baseline usage**: Monitor your app locally or in test environments
 * Use Kubernetes tools like:
 
-  * `kubectl top pod` (CPU/memory usage)
-  * Metrics server, Prometheus, or Datadog
+* `kubectl top pod` (CPU/memory usage)
+* Metrics server, Prometheus, or Datadog
 * Gradually tune **requests and limits** based on observed behavior
 * Set conservative defaults, then adjust as needed to avoid underutilization or crashes
+
+**sample manifest file**
+```bash
+kind: Pod
+apiVersion: v1
+metadata:
+  name: project
+  labels:
+    name: project
+    environment: dev
+spec:
+  containers:
+  - name: app
+    image: nginx
+    resources:
+      # soft limit
+      requests:
+        memory: "64Mi"
+        cpu: "250m" # 1 cpu = 1000m
+      # limits should be atleast same or more than requests i.e hard limit
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+```
+
 
 ---
 ### 08. **ConfigMaps**
 
 A **ConfigMap** is a Kubernetes object used to **store configuration data** (key-value pairs) separately from application code. This allows you to **inject dynamic configuration** into your containers **without rebuilding images**.
+
+**sample manifest file**
+configMap.yml
+```bash
+Kind: pod
+apiVersion: v1
+metadata: 
+    name: labels
+    labels:
+      author: aravind
+      project : k8s
+spec:
+    containers:
+    - name: nginx
+      image: ngiapiVersion: v1
+kind: ConfigMap
+metadata:
+  name: project
+data:
+  github: "https://github.com/xaravind/k8s-resources.git"
+  db: "jdbc:mysql://mysql:3306/sample"
+```
+
+Pod-configMap.yml
+```bash
+apiVersion: v1
+Kind: pod 
+metadata:
+  name: pod-config
+spec:
+  containers:
+  - name: app
+    image: nginx
+  envFrom: # to refer all values at once in configmaps
+  - configMapKeyRef:
+    name: project
+  # env:
+  # # to refer single values
+  # - name: db
+  #   valueFrom:
+  #     configMapKeyRef:
+  #       name: project # The ConfigMap name this value comes from.
+  #       key: db #  The key to fetch.
+   
+```
 
 ---
 
@@ -530,6 +671,35 @@ A **Secret** in Kubernetes is used to store **sensitive data** such as passwords
 * Avoid printing or logging secrets accidentally
 * Use tools like **Sealed Secrets, HashiCorp Vault**, or **external secret stores** for advanced secret management
 
+
+
+**sample manifest files**
+secrets.yml
+```bash
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pod-secret
+data:
+  username: "YWRtaW4K" # echo admin | base64
+  password: "YWRtaW4xMjMK" #echo admin123 | base64
+```
+
+pod-secrets.yml
+```bash
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-secrets
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    envFrom:
+    - secretRef:
+        name: pod-secret
+```
+
 ---
 
 ### 10. **Services**
@@ -544,6 +714,44 @@ A **Service** is a stable way to expose a set of pods to other services or exter
 * To enable **load balancing** across multiple pods
 * To control **how traffic reaches the application**
 
+
+**sample manifest files**
+
+pod-service.yml
+
+```bash
+apiVersion: v1
+kind: pod
+metadata:
+  name: nginx
+  labels:
+    name: frontend
+    environment: dev
+spec:
+  containers:
+    - name: app-nginx
+      image: nginx
+```
+kubectl apply -f pod-service.yml
+
+service.yml
+```bash
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+spec:
+  selector:
+    name: frontend
+    environment: dev
+  ports:
+  - port: 80 # service port
+    targetPort: 80 # target port
+```
+
+kubectl apply -f service.yml
+kubectl get service
+kubectl describe service nginx 
 ---
 
 ### 10.1 **NodePort**
@@ -554,7 +762,7 @@ A **Service** is a stable way to expose a set of pods to other services or exter
 
 ---
 
-### 10.2 **ClusterIP**
+### 10.2 **ClusterIP(default)**
 
 * Default service type
 * Exposes the service **internally** within the cluster
@@ -621,6 +829,41 @@ A **Deployment** is a higher-level Kubernetes object that manages ReplicaSets an
 * Use probes (`readinessProbe`, `livenessProbe`) for better control over rollout behavior
 
 ---
+
+### 🔚 **End Section (Relationship between Pod, ReplicaSet, Deployment, and Service)**
+
+```markdown
+---
+
+## 🔄 How Pod, ReplicaSet, Deployment, and Service Work Together
+
+A typical application deployment in Kubernetes follows this flow:
+
+1. **Pod**  
+   - The smallest unit that runs your container.
+   - It can be manually created but is not recommended for production.
+
+2. **ReplicaSet**  
+   - Ensures the desired number of pods are always running.
+   - Automatically replaces failed pods.
+   - Can be used directly but usually managed by a Deployment.
+
+3. **Deployment**  
+   - Manages ReplicaSets and handles rollout/rollback strategies.
+   - The recommended way to manage stateless apps in Kubernetes.
+
+4. **Service**  
+   - Provides a stable endpoint to expose your pods (via selectors).
+   - Ensures traffic is distributed across healthy pod replicas.
+
+### ✅ Real-World Flow:
+You define a **Deployment** → it creates and manages a **ReplicaSet** → which ensures multiple copies of a **Pod** → these pods are exposed using a **Service**.
+
+This architecture ensures **resilience**, **scalability**, and **reliable communication** between components in your application.
+```
+
+---
+
 
 ### 13. **StatefulSet**
 
