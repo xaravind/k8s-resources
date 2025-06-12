@@ -2,11 +2,14 @@
 
 ## Docker Limitations
 
-* **No self-healing:** If a container crashes, Docker does not automatically restart or replace it, making it less reliable.
-* **Volume management:** Docker lacks advanced or proper volume management features.
-* **Network connectivity:** Networking capabilities are limited and not robust for complex scenarios.
-* **No auto-scaling:** Docker alone cannot scale containers based on demand.
-* **Secrets and configuration management:** Docker does not provide built-in strong secrets or config management.
+* **No built-in load balancing:** Docker does not natively support distributing traffic across multiple containers.
+* **Lacks self-healing:** If a container crashes, Docker won’t automatically restart or replace it without additional tooling.
+* **Limited volume management:** Docker provides basic volume capabilities but lacks advanced management features like dynamic provisioning or backups.
+* **Simplistic networking:** Docker’s networking options are not robust enough for complex or enterprise-level scenarios without external tools.
+* **No auto-scaling:** Docker alone cannot dynamically scale containers based on resource usage or traffic demand.
+* **Weak secrets and configuration management:** Docker does not offer strong built-in support for managing sensitive data or application configurations securely.
+
+---
 
 Currently, we build container images with Docker but run them using Kubernetes (K8s). Kubernetes is responsible for running containers, managing network connectivity, handling volume mounts, and ensuring better orchestration and scalability.
 
@@ -15,7 +18,7 @@ Currently, we build container images with Docker but run them using Kubernetes (
 
 Kubernetes is an open-source container orachestration platform for automating the deployment, scaling and management of containers or pods.
 
-The advantage of k8s over docker is the ability to run **container apps** distributed across multiple VMs.
+One major advantage of Kubernetes over Docker alone is its ability to run **containerized applications** across multiple virtual machines (VMs), enabling scalability and high availability.
 
 ## Kubernetes Architecture Overview
 
@@ -33,71 +36,59 @@ Kubernetes consists of:
 
 The `kube-apiserver` is the **front-end** of the Kubernetes control plane. It acts as the **main entry point** for all cluster operations.
 
-* It **handles REST API requests** from `kubectl`, internal components (like the scheduler, controllers), and external tools.
-* It **validates**, **authenticates**, and **authorizes** each request before processing it.
-* After validation, it updates or retrieves data from **etcd** (the cluster’s source of truth).
-* All communication between the user and the Kubernetes cluster **must go through the API server**.
 
-It is the **only component** that directly communicates with etcd, and all other control plane components interact with the cluster through the API server.
+- Handles **REST API requests** from `kubectl`, internal components (scheduler, controllers), and external tools.
+- Validates, authenticates, and authorizes requests.
+- Communicates with **etcd**, the cluster’s source of truth.
+- It is the only component that communicates directly with `etcd`, whereas all other control plane components access `etcd` indirectly through the API server.
+- All communication between the user and the Kubernetes cluster **must go through the API server**.
+
 
 ---
 
 2. **etcd**
- `etcd` is a **distributed and consistent key-value store** that Kubernetes uses to store **all cluster data**. It holds the **entire state of the cluster**, including objects like **nodes**, **pods**, **ConfigMaps**, **Secrets**, and more.
 
-   If `etcd` goes down or gets corrupted, the **Kubernetes control plane can't function properly**, because it relies on `etcd` to understand the current and desired state of the cluster. That’s why it’s critical to **back it up regularly**. In production environments, we usually store these backups in **cloud-based storage like Amazon S3**, so we can recover quickly if anything goes wrong.
+`etcd` is a **distributed and consistent key-value store** that stores **all cluster data**.
 
+- Holds the entire state of the cluster (nodes, pods, ConfigMaps, Secrets, etc.).
+- If `etcd` fails, the control plane cannot function properly.
+- Regular backups are critical—typically stored in **cloud storage** like Amazon S3.
 ---
 
 3. **kube-scheduler**
-   scheduler is responsible for deploying the new Pods across multiple nodes by considering VMs resources like CPU, RAM, Storage, and other constraints like taints, tolerations, and node selectors.
+
+The `kube-scheduler` assigns newly created pods to suitable nodes by evaluating:
+
+- Available CPU, RAM, and storage
+- Taints and tolerations
+- Node selectors and affinities
 
 ---
 
-
 4. **kube-controller-manager**
 
-The `kube-controller-manager` is a core component of the **Kubernetes control plane**. It continuously monitors the **desired state** (as defined in YAML manifests) and compares it to the **actual state** of the cluster (e.g., Pods running on worker nodes). It also detects changes such as  a **node failure**, **resource shortage**, and other events, and responds accordingly to maintain the desired state, including rescheduling or redistributing workloads.
+The `kube-controller-manager` ensures the **desired state** matches the **actual state** of the cluster. It runs multiple controllers:
 
-It runs multiple built-in controllers, each with a specific function:
+#### Components:
 
+- **Node Controller** – Detects and responds to node failures.
+- **Replication Controller** – Ensures the correct number of pod replicas.
+- **Job Controller** – Manages batch jobs and ensures completion.
+- **Endpoints Controller** – Maintains service-to-pod endpoint mappings.
 
-####  Components of `kube-controller-manager`:
-
-*  **Node Controller**:
-  Detects and responds to **node failures** (e.g., by marking nodes as `NotReady` and evicting Pods if necessary).
-
-*  **Replication Controller**:
-  Ensures the specified number of **Pod replicas** are always running for a given Deployment or ReplicaSet.
-
-*  **Job Controller**:
-  Manages the execution of **batch jobs**, ensuring Pods are created and run to completion.
-
-*  **Endpoints Controller**:
-  Maintains the list of **network endpoints** (IP and port pairs) associated with Services to ensure traffic is routed correctly.
 
 ---
 
 5. **cloud-controller-manager**
 
-The `cloud-controller-manager` is a core component of Kubernetes that **integrates the cluster with cloud provider APIs** (e.g., **AWS**, **GCP**, **Azure**, etc.). It is responsible for managing **cloud-specific control logic** that is abstracted away from the rest of the Kubernetes control plane.
+Integrates Kubernetes with **cloud provider APIs** (e.g., AWS, GCP, Azure).
 
+#### Responsibilities:
 
-
-####  Responsibilities of `cloud-controller-manager`:
-
-*  **Load Balancer Controller**
-  Automatically creates and configures **cloud load balancers** for `Service` objects of type `LoadBalancer`.
-
-*  **Persistent Volume Controller**
-  Manages **provisioning and attachment of storage volumes** (e.g., EBS for AWS, Persistent Disks for GCP).
-
-*  **Node Lifecycle Controller**
-  Manages cloud-specific **node lifecycle events**, such as detecting and removing nodes that were deleted at the cloud provider level.
-
-*  **Route Controller** (optional)
-  Configures **network routes** in the cloud environment for Pod communication across nodes.
-
+- **Load Balancer Controller** – Provisions cloud load balancers.
+- **Persistent Volume Controller** – Manages cloud storage volumes.
+- **Node Lifecycle Controller** – Handles cloud-level node deletions or failures.
+- **Route Controller** – (Optional) Configures cloud-specific network routes.
 
 ### 🔄 Comparison: `kube-controller-manager` vs `cloud-controller-manager`
 
@@ -110,31 +101,55 @@ The `cloud-controller-manager` is a core component of Kubernetes that **integrat
 | **Extensibility**         | Limited to core Kubernetes objects                            | Pluggable per cloud provider, makes Kubernetes modular and portable |
 
 ---
+## Node Components
 
+### 1. `kubelet`
 
-1. **kubelet**
+An agent running on each worker node that:
 
-
-Kubelet is an agent that runs on each node in the Kubernetes cluster. It ensures that the containers defined in PodSpecs are running and healthy. It communicates with the control plane to receive instructions and reports the status of pods and the node.
-
----
-
-2. **kube-proxy**
-
-**Answer:**
-Kube-proxy is responsible for maintaining network rules on nodes. It enables communication between services by forwarding traffic from a service IP to the appropriate backend pod. It supports TCP, UDP, and SCTP load balancing.
+- Ensures pods are running as expected
+- Reports node and pod health to the control plane
+- Interacts with the container runtime
 
 ---
 
-3. **container runtime**
+### 2. `kube-proxy`
 
-The container runtime is the component that actually runs the containers on each node. It pulls container images, starts, stops, and manages containers as instructed by the kubelet. Common examples include **containerd**, **CRI-O**, and (historically) **Docker**.
+Manages network rules and forwards traffic:
+
+- Enables service-to-pod communication
+- Uses `iptables`, `ipvs`, or `eBPF`
+- Supports TCP, UDP, and SCTP load balancing
 
 ---
 
-* **kubelet** – Ensures containers are running and healthy
-* **kube-proxy** – Manages network rules for service-to-pod traffic
-* **Container Runtime** – Runs the actual containers (e.g., containerd, CRI-O)
+### 3. Container Runtime
+
+The container runtime runs the actual containers. It:
+
+- Pulls container images
+- Starts, stops, and manages containers
+- Works with `kubelet`
+
+**Common runtimes:**  
+- `containerd`  
+- `CRI-O`  
+- (Deprecated) `Docker`
+
+---
+
+## Summary
+
+| Component                | Role                                                                 |
+|--------------------------|----------------------------------------------------------------------|
+| **kube-apiserver**       | Frontend for all control plane interactions                          |
+| **etcd**                 | Stores entire cluster state                                           |
+| **kube-scheduler**       | Assigns pods to suitable nodes                                       |
+| **kube-controller-manager** | Reconciles desired vs actual state                                |
+| **cloud-controller-manager** | Manages cloud integration                                       |
+| **kubelet**              | Ensures containers are running on each node                          |
+| **kube-proxy**           | Manages networking and load-balancing rules                          |
+| **Container Runtime**    | Runs containers on nodes                                             |
 
 ---
 
