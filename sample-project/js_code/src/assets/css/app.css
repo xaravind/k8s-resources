@@ -1,0 +1,169 @@
+body, html {
+    height: 100%;
+    position: relative;
+    background-color: var(--theme);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.body-light {
+    background: rgb(255, 255, 255);
+    position: relative;
+}
+
+.body-dark {
+    background: rgb(48, 48, 48);
+    position: relative;
+}
+
+md-toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 80px;
+    position: fixed !important;
+    box-shadow: 0px 3px 8px rgba(24, 24, 24, 0.4)
+}
+
+.nav-content-container {
+    overflow: hidden;
+}
+
+.sidenav-icon {
+    margin: 0px 15px 0px 10px;
+    align-self: center;
+}
+
+.active {
+    background-color: #b0b4b8;
+}
+
+#menu {
+    background: transparent;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: none;
+    transition: width 0.3s ease;
+    /* justify-self: flex-end; */
+}
+
+@media screen and (width > 960px) {
+    #menu {
+        width: 0px;
+        overflow: hidden;
+        padding: 0;
+    }
+}
+
+.md-button.md-fab md-icon {
+    color: #fff !important;
+}
+
+md-menu {
+    margin: 0px 0px !important;
+}
+
+#align-end-inline {
+    margin-left: auto;
+}
+
+#theme-button {
+    background: transparent;
+    box-shadow: none;
+}
+
+.content {
+    width: 100%;
+}
+
+.content-container {
+    height: 100vh;
+    margin-top: 80px;
+    margin-left: 320px;
+    transition: margin-left 0.25s ease-in-out;
+}
+
+@media screen and (width < 960px) {
+    .content-container {
+        margin-left: 0px;
+    }
+}
+
+.loader-container {
+    position: fixed;
+    background: transparent;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: auto;
+    z-index: 1000;
+}
+
+.img-container {
+    background: #fff;
+    margin-inline: auto;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    padding: 0px 20px;
+    border-radius: 12px;
+}
+
+.logo-img {
+    height: 60px;
+    object-fit: cover;
+}
+
+#align-end-inline {
+    margin-left: auto;
+}
+
+md-sidenav {
+    min-height: 100%;
+    margin-top: 80px;
+    position: fixed !important;
+}
+
+@media (min-width: 600px) {
+    md-sidenav {
+        max-width: 400px;
+    }
+}
+
+.content-container-auth {
+    height: 100vh;
+    transition: all 0.25s ease-in-out;
+}
+
+.view-container {
+    height: 100vh;
+}
+
+.login-card {
+    width: 300px;
+}
+
+.login-card-content {
+    padding-bottom: 0px !important;
+}
+
+.login-signup-link {
+    margin-inline: auto;
+}
+
+.login-signup-link a {
+    cursor: pointer;
+}
+
+.login-btn {
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
+    margin-left: 15px !important;
+    margin-right: 15px !important;
+}
+
+md-card md-card-actions {
+    margin: 8px;
+}

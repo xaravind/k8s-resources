@@ -885,11 +885,24 @@ You define a **Deployment** → it creates and manages a **ReplicaSet** → whic
 This architecture ensures **resilience**, **scalability**, and **reliable communication** between components in your application.
 ```
 
+
+
+Sets
+----
+ReplicaSet
+DeploymentSet
+DaemonSet
+StatefulSet
+
 ---
 
 ### 11. **ReplicaSet**
 
 A **ReplicaSet** ensures that a specified number of **pod replicas** are always running.
+
+> ReplicaSets are nothing but creating multiple replicas of pods
+
+
 
 ---
 
@@ -907,12 +920,41 @@ A **ReplicaSet** ensures that a specified number of **pod replicas** are always 
 * Scale up/down using the Deployment for better control
 * Monitor pod health and replica status regularly
 
+**sample manifest file**
+```bash
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nginx
+  # these labels belongs to replicaSet
+  labels:
+    app: project
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+      tier: frontend
+  # below is pod definitions
+  template:
+    metadata:
+      labels:
+        app: nginx
+        tier: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+```
 ---
 
 ### 12. **Deployment**
 
 A **Deployment** is a higher-level Kubernetes object that manages ReplicaSets and provides **declarative updates** to applications.
 
+
+>removing old code and deploying new code. changes the application version. **without downtime**
 ---
 
 ✅ **Why we use Deployments**:

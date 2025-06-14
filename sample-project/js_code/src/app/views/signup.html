@@ -1,0 +1,46 @@
+<md-content layout="column" layout-align="center center" class="view-container">
+    <div>
+        <md-card ng-show="!verified" class="login-card _md md-dark-theme" aria-hidden="false">
+            <md-card-title>
+              <md-card-title-text>
+                <span class="md-headline">Sign Up</span>
+              </md-card-title-text>
+            </md-card-title>
+            <md-card-content class="login-card-content">
+
+                <md-input-container class="md-block md-primary" flex-gt-sm>
+                    <label>Email</label>
+                    <input type="text" ng-model="email"> 
+                </md-input-container>
+            </md-card-content>
+            <md-card-actions layout="column" layout-align="start">
+              <md-button class="md-primary md-raised login-btn" ng-click="verifyEmail()">Verify</md-button>
+              <p class="md-caption login-signup-link">
+                Already have an account? <a ng-click="toLoginPage()" class="md-primary md-body2 md-dark-theme">Login</a>
+              </p>
+            </md-card-actions>
+          </md-card>
+
+        <md-card ng-show="verified" class="md-raised login-card _md md-dark-theme ng-hide" aria-hidden="true">
+            <md-card-title>
+              <md-card-title-text>
+                <span class="md-headline">Sign Up</span>
+              </md-card-title-text>
+            </md-card-title>
+            <md-card-content class="login-card-content">
+
+                <md-input-container class="md-block md-primary" flex-gt-sm>
+                    <label>Password</label>
+                    <input type="text" ng-model="password">
+                  </md-input-container>
+                <md-input-container class="md-block md-primary" flex-gt-sm>
+                    <label>Confirm Password</label>
+                    <input type="text" ng-model="confirmPassword">
+                  </md-input-container>
+            </md-card-content>
+            <md-card-actions layout="column" layout-align="start" class="layout-align-start-stretch layout-column">
+              <md-button class="md-primary md-raised login-btn" ng-click="submitPassword()">Submit</md-button>
+            </md-card-actions>
+          </md-card>
+    </div>
+</md-content>

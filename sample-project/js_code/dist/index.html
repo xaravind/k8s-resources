@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>AngularJS App</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/angular-material/angular-material.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+<script defer src="/bundle.js"></script></head>
+<body>
+
+    <div ng-app="myApp" layout="column" ng-controller="MainCtrl as ctrl" ng-init="myInitFunction()" md-theme="{{ currentTheme }}" md-theme-watch="true" ng-cloak>
+        <md-toolbar ng-cloak>
+                
+                <md-button ng-hide="shouldHideSidenav()" class="md-fab md-mini" id="menu" ng-click="toggleLeft('left')">
+                    <md-icon>menu</md-icon>
+                </md-button>
+                
+                <div class="theme-selector">
+                    <md-button class="md-fab md-mini" id="theme-button" ng-click="toggleTheme()" ng-model="darkmode">
+                        <md-icon>contrast</md-icon>
+                    </md-button>
+                </div>
+                <div>
+                    <md-menu md-position-mode="target bottom">
+                        <md-button ng-hide="shouldHideSidenav()" class="demo-menu-open-button" ng-click="openClientMenu($mdMenu, $event)">
+                            Select Menu
+                        </md-button>
+                        <md-menu-content width="4">
+                            <div ng-repeat="item in items">
+                                <md-menu-item>
+                                    <md-button>{{ item }}</md-button>
+                                </md-menu-item>
+                            </div>
+                            <!-- Add more items here -->
+                        </md-menu-content>
+                    </md-menu>
+                </div>
+                
+                    <div class="img-container"><img ng-hide="shouldHideSidenav()" class="logo-img" src="/images/COMPANY LOGO .png"/></div>
+            
+               
+               
+                    
+                    <md-menu md-position-mode="target-right bottom">
+                       <md-button ng-hide="shouldHideSidenav()" id="align-end-inline" ng-click="openUserMenu($mdMenu, $event)">
+                           Current User
+                       </md-button>
+                       
+                        <md-menu-content width="4">
+                            <md-menu-item>
+                                <md-button ng-click="logout()">Logout</md-button>
+                            </md-menu-item>
+                            <md-menu-item>
+                                <md-button>Item 2</md-button>
+                            </md-menu-item>
+                            <!-- Add more items here -->
+                        </md-menu-content>
+                    </md-menu>
+               
+                    
+                    <md-menu md-position-mode="target-right bottom">
+                    <md-button ng-hide="shouldHideSidenav()" class="md-fab md-mini"  ng-click="openMenu($mdMenu, $event)" id="theme-button">
+                         <md-icon md-menu-origin>notifications</md-icon>
+                    </md-button>
+                    <md-menu-content width="4" class="md-dark-theme">
+                        <md-menu-item>
+                            <md-button ng-click="ctrl.redial($event)">
+                                <md-icon>dialpad</md-icon>
+                                    Redial
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-item>
+                        <md-button disabled="disabled" ng-click="ctrl.checkVoicemail()">
+                            <md-icon>voicemail</md-icon>
+                                Check voicemail
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-divider></md-menu-divider>
+                        <md-menu-item>
+                            <md-button ng-click="ctrl.toggleNotifications()">
+                                <md-icon ng-if="!ctrl.notificationsEnabled">notifications_off</md-icon>
+                                <md-icon ng-if="ctrl.notificationsEnabled">notifications_active</md-icon>
+                                {{ctrl.notificationsEnabled ? 'Disable' : 'Enable' }} notifications
+                            </md-button>
+                        </md-menu-item>
+                    </md-menu-content>
+                </md-menu>
+          
+        </md-toolbar>
+        
+        <!-- Sidenav -->
+        <div flex layout="row" ng-hide="shouldHideSidenav()">
+            <md-sidenav
+            class="md-sidenav-left"
+            md-component-id="left"
+            md-is-locked-open="shouldLockOpen()"
+            >
+                <md-content class="nav-content-container" layout="column" layout-padding>
+                    <!-- Your sidenav content here -->
+                    
+                    <md-button layout="row" ng-click="navigateTo('/')" ng-class="{active: currentPath === '/'}">
+                        <md-icon class="sidenav-icon">home</md-icon>
+                        <span class="sidenav-page">Home</span>
+                    </md-button>
+                    <md-button flex layout="row" ng-click="navigateTo('/page1')" ng-class="{active: currentPath === '/page1'}"> 
+                        <md-icon class="sidenav-icon">swipe-left</md-icon>
+                        <span class="sidenav-page">Page1</span>
+                    </md-button>
+                    <md-button flex layout="row" ng-click="navigateTo('/page2')" ng-class="{active: currentPath === '/page2'}">
+                        <md-icon class="sidenav-icon">article</md-icon>
+                        <span class="sidenav-page">Page2</span>   
+                            </md-button>
+                            <md-button flex layout="row" ng-click="navigateTo('/page3')" ng-class="{active: currentPath === '/page3'}">
+                                <md-icon class="sidenav-icon">currency_exchange</md-icon>
+                                <span class="sidenav-page">Page3</span>   
+                            </md-button>
+                            <md-button flex layout="row" ng-click="navigateTo('/about')" ng-class="{active: currentPath === '/about'}">
+                                <md-icon class="sidenav-icon">donut_large</md-icon>
+                                <span class="sidenav-page">About</span>   
+                            </md-button>
+                            
+                </md-content>
+            </md-sidenav>
+            
+            <!-- Main content -->
+            <div class="content-container" layout="column" layout-align="top center" flex ng-cloak>
+                <div ng-show="showLoader" class="loader-container">
+                    <md-progress-circular md-mode="indeterminate"></md-progress-circular>
+                </div>
+                <div ng-view class="content"></div>
+            </div>
+        </div>
+        <div ng-hide="!shouldHideSidenav()" class="content-container-auth" layout="column" layout-align="top center" flex>
+            <div ng-view class="content"></div>
+        </div>
+    </div>
+        
+
+    <script type="text/javascript" src="/bundle.js"></script>
+</body>
+</html>
