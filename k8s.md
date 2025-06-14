@@ -759,10 +759,46 @@ kubectl describe service nginx
 * Exposes the service on a **static port** on each node's IP
 * Accessible from **outside the cluster** via `NodeIP:NodePort`
 * ⚠️ Less flexible and secure for production
+* Kubernetes opens a specific port (default range: **30000–32767**) on **all worker nodes**.
+
+* You can then access your app using:
+
+  ```
+  http://<NodeIP>:<NodePort>
+  ```
+
+### 🔁 Flow:
+
+```
+Client --> NodeIP:NodePort --> Service --> Pod
+```
+
+### Example:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort
+  selector:
+    app: my-app
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30080
+```
+
+In this case:
+
+* Traffic hits `http://<NodeIP>:30080`
+* It forwards to the pod's port `8080`
+
 
 ---
 
-### 10.2 **ClusterIP(default)**
+### 10.2 **ClusterIP**
 
 * Default service type
 * Exposes the service **internally** within the cluster
@@ -775,6 +811,79 @@ kubectl describe service nginx
 * Provisions an **external load balancer** (cloud-dependent)
 * Exposes service to **external traffic** using a **public IP**
 * Ideal for **internet-facing applications**
+
+lb.yml
+```bash
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort
+  selector:
+    app: my-app
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30081
+```
+
+Flow for a `LoadBalancer` Service in Kubernetes:
+
+```
+Client
+  ↓
+External Load Balancer (Provisioned by Cloud Provider)
+  ↓
+NodePort (on Kubernetes Node)
+  ↓
+ClusterIP (Service inside the cluster)
+  ↓
+Pod (Application container)
+```
+
+---
+
+### 🔍 Explanation:
+
+* **External Load Balancer**: Created automatically when you use `type: LoadBalancer` on a supported cloud provider.
+* **NodePort**: The load balancer forwards traffic to a NodePort on one of the cluster nodes.
+* **ClusterIP**: The internal service that routes traffic to matching Pods.
+* **Pod**: The actual container where your app is running.
+
+---
+
+### 🔚 **End Section (Relationship between Pod, ReplicaSet, Deployment, and Service)**
+
+```markdown
+---
+
+## 🔄 How Pod, ReplicaSet, Deployment, and Service Work Together
+
+A typical application deployment in Kubernetes follows this flow:
+
+1. **Pod**  
+   - The smallest unit that runs your container.
+   - It can be manually created but is not recommended for production.
+
+2. **ReplicaSet**  
+   - Ensures the desired number of pods are always running.
+   - Automatically replaces failed pods.
+   - Can be used directly but usually managed by a Deployment.
+
+3. **Deployment**  
+   - Manages ReplicaSets and handles rollout/rollback strategies.
+   - The recommended way to manage stateless apps in Kubernetes.
+
+4. **Service**  
+   - Provides a stable endpoint to expose your pods (via selectors).
+   - Ensures traffic is distributed across healthy pod replicas.
+
+### ✅ Real-World Flow:
+You define a **Deployment** → it creates and manages a **ReplicaSet** → which ensures multiple copies of a **Pod** → these pods are exposed using a **Service**.
+
+This architecture ensures **resilience**, **scalability**, and **reliable communication** between components in your application.
+```
 
 ---
 
@@ -830,39 +939,6 @@ A **Deployment** is a higher-level Kubernetes object that manages ReplicaSets an
 
 ---
 
-### 🔚 **End Section (Relationship between Pod, ReplicaSet, Deployment, and Service)**
-
-```markdown
----
-
-## 🔄 How Pod, ReplicaSet, Deployment, and Service Work Together
-
-A typical application deployment in Kubernetes follows this flow:
-
-1. **Pod**  
-   - The smallest unit that runs your container.
-   - It can be manually created but is not recommended for production.
-
-2. **ReplicaSet**  
-   - Ensures the desired number of pods are always running.
-   - Automatically replaces failed pods.
-   - Can be used directly but usually managed by a Deployment.
-
-3. **Deployment**  
-   - Manages ReplicaSets and handles rollout/rollback strategies.
-   - The recommended way to manage stateless apps in Kubernetes.
-
-4. **Service**  
-   - Provides a stable endpoint to expose your pods (via selectors).
-   - Ensures traffic is distributed across healthy pod replicas.
-
-### ✅ Real-World Flow:
-You define a **Deployment** → it creates and manages a **ReplicaSet** → which ensures multiple copies of a **Pod** → these pods are exposed using a **Service**.
-
-This architecture ensures **resilience**, **scalability**, and **reliable communication** between components in your application.
-```
-
----
 
 
 ### 13. **StatefulSet**
