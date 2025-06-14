@@ -4,6 +4,7 @@ metadata:
   name: nginx
   # these labels belongs to replicaSet
   labels:
+    purpose: ReplicaSet
     app: project
     tier: frontend
 spec:
