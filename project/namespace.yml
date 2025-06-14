@@ -1,0 +1,7 @@
+kind: namespace
+apiVersion: v1
+metadata:
+  name: project
+  labels:
+    name: project
+    env: PROD

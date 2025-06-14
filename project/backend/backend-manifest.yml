@@ -1,28 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment 
 metadata:
-  name: nginx
+  name: backend
+  namespace: project
   # these labels belongs to replicaSet
   labels:
     purpose: Deployment 
-    app: project
-    tier: frontend
+    app: mysql
+    name: project
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: nginx
-      tier: frontend
+      component: backend
+      name: project
+      tier: app
   # below is pod definitions
   template:
     metadata:
       labels:
-        app: nginx
-        tier: frontend
+        component: backend
+        name: project
+        tier: app
     spec:
       containers:
         - name: nginx
-          image: nginx
+          image: joindevops/mysql:v1.0
           resources:
             requests:
               memory: "64Mi"
@@ -30,3 +33,17 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: project
+spec:
+  selector:
+      component: backend
+      name: project
+      tier: app
+  ports:
+  - port: 8080
+    targetPort: 8080
