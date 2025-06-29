@@ -16,7 +16,7 @@ Currently, we build container images with Docker but run them using Kubernetes (
 ---
 ## Kubernetes
 
-Kubernetes is an open-source container orachestration platform for automating the deployment, scaling and management of containers or pods.
+Kubernetes is an open-source container orchestration platform for automating the deployment, scaling and management of containers or pods.
 
 One major advantage of Kubernetes over Docker alone is its ability to run **containerized applications** across multiple virtual machines (VMs), enabling scalability and high availability.
 
